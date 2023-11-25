@@ -1,8 +1,9 @@
 ### Odoo Docker
 
 #### TODO:
-* Custom docker image with odoo source install + custom pip packages. https://github.com/odoo/odoo/blob/17.0/debian/control
-    https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+* Custom docker image with odoo source install + custom pip packages.
+    * https://github.com/odoo/odoo/blob/17.0/debian/control
+    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 * CI pipeline with Github actions / Jenkinks
     * https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
     * https://github.com/OCA/oca-ci
@@ -23,7 +24,8 @@
 * `echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null`
 * `apt update`
 * `apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
-* `docker pull odoo:17.0`
+* `cd docker/17.0`
+* `docker build -t odoo17 .`
 * ``
 
 #### DB setup:
@@ -58,6 +60,19 @@
 
 
 
+docker run \
+    -v /home/elmeri/Work/17:/mnt \
+    -v kni:/var/lib/odoo \
+    -v /home/elmeri/Projects/odoo-agent/odoo:/etc/odoo \
+    -v /var/run/postgresql/:/var/run/postgresql/ \
+    -p 127.0.0.1:8017:8069 \
+    -p [::1]:8017:8069 \
+    -p 127.0.0.1:9017:8072 \
+    -p [::1]:9017:8072 \
+    --name kni -t odoo17
+
+
 #### Random notes
 * Docker logs
 * Docker volumes: `ls /var/lib/docker/volumes`
+* Delete everything: `docker system prune -a --volumes`
