@@ -13,15 +13,15 @@
 * Monitoring system with logs (Zabbix or something else?)
 
 #### Installation
-* `git clone -b 17.0 git@github.com:elmeriniemela/odoo-agent.git /opt/odoo-agent`
-* `cd /opt/odoo-agent`
+* `git clone -b 17.0 git@github.com:elmeriniemela/odoo-agent.git /opt/17.0/odoo-agent`
+* `cd /opt/17.0/odoo-agent`
 * `git submodule update --init`
 * `./install.sh`
 
 
 #### Building the image
 * `cd docker`
-* `docker build -t odoo-src:17.0 /opt/odoo-agent/docker`
+* `docker build -t odoo-src:17.0 /opt/17.0/odoo-agent/docker`
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`
@@ -30,7 +30,7 @@
 * `CREATE USER kni WITH ENCRYPTED PASSWORD 'kni';`
 * `ALTER DATABASE kni OWNER TO kni;`
 * docker run \
-    -v /opt/odoo-agent/src:/mnt:ro \
+    -v /opt/17.0/odoo-agent/src:/mnt:ro \
     -v /etc/odoo/kni:/etc/odoo:ro \
     -v kni:/var/lib/odoo \
     -v /var/run/postgresql/:/var/run/postgresql/ \
