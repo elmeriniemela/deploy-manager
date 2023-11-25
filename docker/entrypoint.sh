@@ -2,9 +2,9 @@
 
 set -e
 
-if [ -e "/mnt/extra-addons/requirements.txt" ]; then
-    pip3 install -r /mnt/extra-addons/requirements.txt
-fi
+# if [ -e "/mnt/extra-addons/requirements.txt" ]; then
+#     pip3 install -r /mnt/extra-addons/requirements.txt
+# fi
 
 if [ -e "/usr/bin/odoo" ]; then
     exec odoo

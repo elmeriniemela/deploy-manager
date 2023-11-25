@@ -28,6 +28,7 @@ RUN apt-get update && \
         libssl-dev \
         node-less \
         npm \
+        git \
         postgresql-client \
         python3-gevent \
         python3-magic \

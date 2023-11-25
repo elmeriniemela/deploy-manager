@@ -29,7 +29,7 @@
 * `CREATE DATABASE kni;`
 * `CREATE USER kni WITH ENCRYPTED PASSWORD 'kni';`
 * `ALTER DATABASE kni OWNER TO kni;`
-* docker run --name kni -t odoo-src:17.0 \
+* docker run \
     -v /opt/odoo-agent/src:/mnt:ro \
     -v /etc/odoo/kni:/etc/odoo:ro \
     -v kni:/var/lib/odoo \
@@ -37,20 +37,8 @@
     -p 127.0.0.1:49152:8069 \
     -p [::1]:49152:8069 \
     -p 127.0.0.1:49153:8072 \
-    -p [::1]:49153:8072
-
-
-
-* docker run --name kni -t odoo-src:17.0 \
-    -v /home/elmeri/Projects/odoo-agent/src:/mnt:ro \
-    -v /home/elmeri/Projects/odoo-agent/odoo:/etc/odoo:ro \
-    -v kni:/var/lib/odoo \
-    -v /var/run/postgresql/:/var/run/postgresql/ \
-    -p 127.0.0.1:49152:8069 \
-    -p [::1]:49152:8069 \
-    -p 127.0.0.1:49153:8072 \
-    -p [::1]:49153:8072
-
+    -p [::1]:49153:8072 \
+    --name kni -t odoo-src:17.0
 
 #### Random notes
 * Docker logs
