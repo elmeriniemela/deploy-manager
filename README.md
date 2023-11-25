@@ -24,7 +24,7 @@
 * `echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null`
 * `apt update`
 * `apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
-* `cd docker/17.0`
+* `cd docker`
 * `docker build -t odoo17 .`
 * ``
 
@@ -61,9 +61,9 @@
 
 
 docker run \
-    -v /home/elmeri/Work/17:/mnt \
+    -v /home/elmeri/Work/17:/mnt:ro \
+    -v /home/elmeri/Projects/odoo-agent/odoo:/etc/odoo:ro \
     -v kni:/var/lib/odoo \
-    -v /home/elmeri/Projects/odoo-agent/odoo:/etc/odoo \
     -v /var/run/postgresql/:/var/run/postgresql/ \
     -p 127.0.0.1:8017:8069 \
     -p [::1]:8017:8069 \
