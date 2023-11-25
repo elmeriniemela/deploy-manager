@@ -37,9 +37,17 @@
     -p [::1]:49152:8069 \
     -p 127.0.0.1:49153:8072 \
     -p [::1]:49153:8072 \
-    --name kni -t odoo-src:16.0
-
-
+    --name kni -t -d odoo-src:16.0
+* docker run \
+    -v /opt/odoo-agent/src:/mnt:ro \
+    -v /etc/odoo/elke:/etc/odoo:ro \
+    -v elke:/var/lib/odoo \
+    -v /var/run/postgresql/:/var/run/postgresql/ \
+    -p 127.0.0.1:49154:8069 \
+    -p [::1]:49154:8069 \
+    -p 127.0.0.1:49155:8072 \
+    -p [::1]:49155:8072 \
+    --name elke -t -d odoo-src:16.0
 
 #### Random notes
 * Docker logs
