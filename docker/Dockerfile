@@ -114,6 +114,8 @@ RUN useradd -ms /bin/bash odoo
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt for users addons
 VOLUME ["/var/lib/odoo", "/mnt"]
 
+RUN mkdir -p /var/lib/odoo && chown -R odoo /var/lib/odoo
+
 RUN ln -s /mnt/odoo/odoo-bin /usr/bin/odoo
 
 # Expose Odoo services
