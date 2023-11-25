@@ -31,6 +31,14 @@ RUN apt-get update && \
         git \
         postgresql-client \
         python3-gevent \
+        python3-wheel \
+        python3-setuptools \
+        python3-paramiko \
+        python3-cryptography \
+        python3-openpyxl \
+        python3-pandas \
+        python3-xmltodict \
+        python3-dicttoxml \
         python3-magic \
         python3-num2words \
         python3-odf \
