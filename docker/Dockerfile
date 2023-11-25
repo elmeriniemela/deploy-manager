@@ -114,7 +114,6 @@ RUN useradd -ms /bin/bash odoo
 RUN mkdir -p /var/lib/odoo && chown -R odoo /var/lib/odoo
 VOLUME ["/var/lib/odoo"]
 
-RUN mkdir -p /mnt
 RUN ln -s /mnt/odoo/odoo-bin /usr/bin/odoo
 
 # Expose Odoo services
