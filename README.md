@@ -13,24 +13,23 @@
 * Monitoring system with logs (Zabbix or something else?)
 
 #### Installation
-* `git clone -b 16.0 git@github.com:elmeriniemela/odoo-agent.git /opt/16.0/odoo-agent`
-* `cd /opt/16.0/odoo-agent`
+* `git clone -b 16.0 git@github.com:elmeriniemela/odoo-agent.git /opt/odoo-agent`
+* `cd /opt/odoo-agent`
 * `git submodule update --init`
 * `./install.sh`
 
 
 #### Building the image
 * `cd docker`
-* `docker build -t odoo-src:16.0 /opt/16.0/odoo-agent/docker`
+* `docker build -t odoo-src:16.0 /opt/odoo-agent/docker`
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`
-* `psql postgres`
-* `CREATE DATABASE kni;`
-* `CREATE USER kni WITH ENCRYPTED PASSWORD 'kni';`
-* `ALTER DATABASE kni OWNER TO kni;`
+* `createdb kni`
+* `psql postgres -c "CREATE USER kni WITH ENCRYPTED PASSWORD 'kni'"`
+* `psql postgres -c "ALTER DATABASE kni OWNER TO kni"`
 * docker run \
-    -v /opt/16.0/odoo-agent/src:/mnt:ro \
+    -v /opt/odoo-agent/src:/mnt:ro \
     -v /etc/odoo/kni:/etc/odoo:ro \
     -v kni:/var/lib/odoo \
     -v /var/run/postgresql/:/var/run/postgresql/ \
@@ -39,6 +38,8 @@
     -p 127.0.0.1:49153:8072 \
     -p [::1]:49153:8072 \
     --name kni -t odoo-src:16.0
+
+
 
 #### Random notes
 * Docker logs

@@ -1,2 +1,3 @@
 .psql_history
 .bash_history
+*.pyc
