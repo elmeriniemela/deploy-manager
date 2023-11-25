@@ -13,6 +13,7 @@
 * Monitoring system with logs (Zabbix or something else?)
 
 #### Installation
+* `git clone -b 17.0 git@github.com:elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `apt update`
 * `apt install postgresql nginx ca-certificates curl gnupg`
 * `su - postgres -c "createuser -s root"`

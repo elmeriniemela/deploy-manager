@@ -10,7 +10,7 @@
 	path = src/enterprise
 	url = git@github.com:odoo/enterprise.git
 	branch = 17.0
-[submodule "src/extra-addons"]
+[submodule "extra-addons"]
 	path = src/extra-addons
 	url = git@github.com:elmeriniemela/odoo_addons.git
 	branch = 16.0
