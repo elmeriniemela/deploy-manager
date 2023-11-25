@@ -29,11 +29,12 @@ RUN apt-get update && \
         node-less \
         npm \
         git \
+        build-essential \
+        libgmp-dev \
         postgresql-client \
         python3-dev \
         python3-gevent \
         python3-wheel \
-        python3-setuptools \
         python3-paramiko \
         python3-cryptography \
         python3-openpyxl \
