@@ -40,6 +40,18 @@
     -p [::1]:49153:8072
 
 
+
+* docker run --name kni -t odoo-src:17.0 \
+    -v /home/elmeri/Projects/odoo-agent/src:/mnt:ro \
+    -v /home/elmeri/Projects/odoo-agent/odoo:/etc/odoo:ro \
+    -v kni:/var/lib/odoo \
+    -v /var/run/postgresql/:/var/run/postgresql/ \
+    -p 127.0.0.1:49152:8069 \
+    -p [::1]:49152:8069 \
+    -p 127.0.0.1:49153:8072 \
+    -p [::1]:49153:8072
+
+
 #### Random notes
 * Docker logs
 * Docker volumes: `ls /var/lib/docker/volumes`
