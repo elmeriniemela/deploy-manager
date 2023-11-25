@@ -1,0 +1,16 @@
+[submodule "odoo"]
+	path = src/odoo
+	url = git@github.com:odoo/odoo.git
+	branch = 17.0
+[submodule "design-themes"]
+	path = src/design-themes
+	url = git@github.com:odoo/design-themes.git
+	branch = 17.0
+[submodule "enterprise"]
+	path = src/enterprise
+	url = git@github.com:odoo/enterprise.git
+	branch = 17.0
+[submodule "src/extra-addons"]
+	path = src/extra-addons
+	url = git@github.com:elmeriniemela/odoo_addons.git
+	branch = 16.0

@@ -25,51 +25,22 @@
 * `apt update`
 * `apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
 * `cd docker`
-* `docker build -t odoo17 .`
+* `docker build -t odoo:17.0 .`
 * ``
 
 #### DB setup:
 * `CREATE DATABASE kni;`
 * `CREATE USER kni WITH ENCRYPTED PASSWORD 'kni';`
 * `ALTER DATABASE kni OWNER TO kni;`
-
-
-* docker run --entrypoint odoo \
-    -v /var/lib/odoo/extra-addons:/mnt/extra-addons \
-    -v /var/lib/odoo/enterprise:/mnt/enterprise \
-    -v kni:/var/lib/odoo \
-    -v /etc/odoo/kni:/etc/odoo \
-    -v /var/run/postgresql/:/var/run/postgresql/ \
-    -p 127.0.0.1:49152:8069 \
-    -p [::1]:49152:8069 \
-    -p 127.0.0.1:49153:8072 \
-    -p [::1]:49153:8072 \
-    --name kni -t odoo
-
-* docker run --entrypoint odoo \
-    -v /var/lib/odoo/extra-addons:/mnt/extra-addons \
-    -v /var/lib/odoo/enterprise:/mnt/enterprise \
-    -v elke:/var/lib/odoo \
-    -v /etc/odoo/elke:/etc/odoo \
-    -v /var/run/postgresql/:/var/run/postgresql/ \
-    -p 127.0.0.1:49154:8069 \
-    -p [::1]:49154:8069 \
-    -p 127.0.0.1:49155:8072 \
-    -p [::1]:49155:8072 \
-    --name elke -t odoo
-
-
-
-docker run \
-    -v /home/elmeri/Work/17:/mnt:ro \
-    -v /home/elmeri/Projects/odoo-agent/odoo:/etc/odoo:ro \
+* docker run --name kni -t odoo:17.0 \
+    -v /opt/odoo-agent/src:/mnt:ro \
+    -v /etc/odoo/kni:/etc/odoo:ro \
     -v kni:/var/lib/odoo \
     -v /var/run/postgresql/:/var/run/postgresql/ \
     -p 127.0.0.1:8017:8069 \
     -p [::1]:8017:8069 \
     -p 127.0.0.1:9017:8072 \
-    -p [::1]:9017:8072 \
-    --name kni -t odoo17
+    -p [::1]:9017:8072
 
 
 #### Random notes
