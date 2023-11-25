@@ -112,7 +112,7 @@ COPY ./entrypoint.sh /
 RUN useradd -ms /bin/bash odoo
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt for users addons
 RUN mkdir -p /var/lib/odoo && chown -R odoo /var/lib/odoo
-VOLUME ["/var/lib/odoo"]
+VOLUME ["/var/lib/odoo", "/mnt"]
 
 RUN ln -s /mnt/odoo/odoo-bin /usr/bin/odoo
 
