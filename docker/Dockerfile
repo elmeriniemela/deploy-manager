@@ -30,6 +30,7 @@ RUN apt-get update && \
         npm \
         git \
         postgresql-client \
+        python3-dev \
         python3-gevent \
         python3-wheel \
         python3-setuptools \
