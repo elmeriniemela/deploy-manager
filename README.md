@@ -25,9 +25,16 @@
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`
+* `psql postgres -c "REVOKE CONNECT ON DATABASE template1 FROM PUBLIC"`
+* `psql postgres -c "REVOKE CONNECT ON DATABASE postgres FROM PUBLIC"`
+* https://wiki.postgresql.org/wiki/Shared_Database_Hosting
+* https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
+
+#### New DB
 * `createdb kni`
 * `psql postgres -c "CREATE USER kni WITH ENCRYPTED PASSWORD 'kni'"`
 * `psql postgres -c "ALTER DATABASE kni OWNER TO kni"`
+* `psql postgres -c "REVOKE CONNECT ON DATABASE kni FROM PUBLIC"`
 * docker run \
     -v /opt/odoo-agent/src:/mnt:ro \
     -v /etc/odoo/kni:/etc/odoo:ro \
