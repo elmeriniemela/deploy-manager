@@ -12,6 +12,7 @@ def test():
     print("test")
 
 
+@register
 def new_instance(name, uid, http_port, gevent_port):
     pw = secrets.token_hex(32)
     queries = [
