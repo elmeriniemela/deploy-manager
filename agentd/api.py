@@ -13,7 +13,11 @@ def test():
 
 
 @register
-def new_instance(name, uid, http_port, gevent_port):
+def new_instance(params):
+    name = params['name']
+    uid = params['uid']
+    http_port = params['http_port']
+    gevent_port = params['http_port']
     pw = secrets.token_hex(32)
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),
