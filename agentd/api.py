@@ -66,6 +66,7 @@ def new_instance(name, uid, http_port, gevent_port):
         ['docker', 'restart', uid],
     ]
 
+    class SubprocessError(Exception): pass
     for cmd in commands:
         try:
             subprocess.run(
@@ -75,6 +76,8 @@ def new_instance(name, uid, http_port, gevent_port):
                 check=True,
                 encoding='utf-8',
             )
-        except subprocess.CalledProcessError as e:
-            raise Exception(e.output)
+        except subprocess.CalledProcessError as error:
+            msg = error.stderr or error.stdout
+            cmd = ' '.join(error.cmd)
+            raise SubprocessError(f'{msg}\n\n{cmd}')
 
