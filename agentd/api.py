@@ -20,12 +20,19 @@ def new_instance(name, uid, http_port, gevent_port):
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
-    with psycopg2.connect(dbname='postgres') as conn:
+
+    cur = conn = None
+    try:
+        conn = psycopg2.connect(dbname='postgres')
         conn.set_session(autocommit=True) # CREATE DATABASE cannot be run inside a transaction block.
-        conn.commit()
-        with conn.cursor() as cur:
-            for args in queries:
-                cur.execute(*args)
+        cur = conn.cursor()
+        for args in queries:
+            cur.execute(*args)
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
     with open('odoo/odoo.conf') as fp:
         template = Template(fp.read())
