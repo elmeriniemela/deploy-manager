@@ -1,4 +1,5 @@
 import logging
+import socket
 import os
 import psycopg2
 from psycopg2 import sql
@@ -42,6 +43,18 @@ def new_instance(name, uid, http_port, gevent_port):
         int(uid, 16)
     except ValueError:
         raise ValueError("Invalid UID, expected a hexadecimal number.")
+
+    for p in [http_port, gevent_port]:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            resp = sock.connect_ex(('127.0.0.1', p))
+        finally:
+            sock.close()
+        if resp != 111:
+            _logger.info("Port responed with %s.", resp)
+            raise ValueError("Port %s is already in use.", p)
+
+
 
     pw = secrets.token_hex(32)
     queries = [
