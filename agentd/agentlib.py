@@ -83,6 +83,6 @@ def is_valid_hostname(hostname):
     allowed = re.compile(r"(?!-)[a-z0-9-]{1,63}(?<!-)$")
     for label in labels:
         if not allowed.match(label):
-            raise ValueError("Invalid characters in '%s'. Not allowed for a domain name.")
+            raise ValueError("Invalid characters in '%s'. Not allowed for a domain name." % label)
 
     return True
