@@ -61,7 +61,7 @@ def new_instance(name, uid, http_port, gevent_port):
             'docker', 'exec', '-it', uid, 'odoo',
             '--init=base',
             '--http-port=9999',
-            '-stop-after-init',
+            '--stop-after-init',
         ],
         ['docker', 'restart', uid],
     ]
