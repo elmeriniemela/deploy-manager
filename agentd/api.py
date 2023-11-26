@@ -20,7 +20,7 @@ def new_instance(name, uid, http_port, gevent_port):
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
-    with psycopg2.connect(dbname='postgres') as conn:
+    with psycopg2.connect(dbname='postgres', autocommit=True) as conn:
         with conn.cursor() as cur:
             for args in queries:
                 cur.execute(*args)
