@@ -51,6 +51,14 @@ def create(uid, hostname, http_port, gevent_port):
 
     agentlib.store_odoo_config(uid, pw)
 
+    for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
+        match, target, mapping = agentlib.load_nginx_map(fname)
+        mapping[hostname] = port
+        agentlib.store_nginx_map(fname, match, target, mapping)
+
+    agentlib.execute(['systemctl', 'reload', 'nginx'])
+
+
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
