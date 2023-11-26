@@ -33,12 +33,14 @@ def remove(uid, hostname):
         match, target, mapping = agentlib.load_nginx_map(fname)
         mapping.pop(hostname)
         agentlib.store_nginx_map(fname, match, target, mapping)
+    agentlib.execute(['systemctl', 'reload', 'nginx'])
 
     queries = [
         (sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(uid)),),
         (sql.SQL("DROP USER {uid}").format(uid=sql.Identifier(uid)),),
     ]
     agentlib.psql(queries)
+
     agentlib.execute(['docker', 'volume', 'rm', uid])
 
 
