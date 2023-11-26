@@ -32,7 +32,7 @@ def load_nginx_map(fname):
 
 def store_nginx_map(fname, match, target, mapping):
     with open('templates/nginxmap.conf') as fp:
-        template = Template(fp.read())
+        template = Template(fp.read(), keep_trailing_newline=True)
 
     conf = template.render(mapping=mapping, match=match, target=target)
     with open(f'/etc/nginx/conf.d/{fname}', 'w') as fp:
@@ -41,7 +41,7 @@ def store_nginx_map(fname, match, target, mapping):
 
 def store_odoo_config(uid, pw):
     with open('templates/odoo.conf') as fp:
-        template = Template(fp.read())
+        template = Template(fp.read(), keep_trailing_newline=True)
 
     conf = template.render(uid=uid, pw=pw)
     os.makedirs(f'/etc/odoo/{uid}', mode=0o755, exist_ok=True)
