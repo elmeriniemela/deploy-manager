@@ -33,7 +33,7 @@ def new_instance(name, uid, http_port, gevent_port):
             sock.close()
         if resp != 111:
             _logger.info("Port responed with %s.", resp)
-            raise ValueError("Port %s is already in use.", p)
+            raise ValueError("Port %s is already in use." % p)
 
 
 
