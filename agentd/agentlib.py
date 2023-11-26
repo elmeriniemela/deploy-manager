@@ -1,6 +1,10 @@
 import logging
 import subprocess
 import socket
+import psycopg2
+import re
+from jinja2 import Template
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -11,6 +15,53 @@ def register(func):
     wraps._rpc = True
     wraps.__name__ = func.__name__
     return wraps
+
+
+def load_nginx_map(fname):
+    mapping = {}
+    with open(f'/etc/nginx/conf.d/{fname}') as fp:
+        lines = fp.readlines()
+
+    [(match, target)] = re.findall(r'map\s+(\$[\w]+)\s+(\$[\w]+)\s+{', lines[0])
+
+    for line in lines[1:]:
+        for key, value in re.findall(r'\s+([\w:\.]+)\s+([\w:\.]+);', line):
+            mapping[key] = value
+
+    return match, target, mapping
+
+def store_nginx_map(fname, match, target, mapping):
+    with open('templates/nginxmap.conf') as fp:
+        template = Template(fp.read())
+
+    conf = template.render(mapping=mapping, match=match, target=target)
+    with open(f'/etc/nginx/conf.d/{fname}', 'w') as fp:
+        fp.write(conf)
+
+
+def store_odoo_config(uid, pw):
+    with open('templates/odoo.conf') as fp:
+        template = Template(fp.read())
+
+    conf = template.render(uid=uid, pw=pw)
+    os.makedirs(f'/etc/odoo/{uid}', mode=0o755, exist_ok=True)
+    with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
+        fp.write(conf)
+
+
+def psql(queries):
+    cur = conn = None
+    try:
+        conn = psycopg2.connect(dbname='postgres')
+        conn.set_session(autocommit=True) # CREATE DATABASE cannot be run inside a transaction block.
+        cur = conn.cursor()
+        for args in queries:
+            cur.execute(*args)
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 
 class SubprocessError(Exception): pass
