@@ -4,41 +4,22 @@ import os
 import psycopg2
 from psycopg2 import sql
 import secrets
-import subprocess
-import re
 from jinja2 import Template
-from agentlib import register
+import agentlib
 _logger = logging.getLogger(__name__)
 
 
-def _is_valid_hostname(hostname):
-    # https://stackoverflow.com/a/33214423
-    if hostname[-1] == ".":
-        # strip exactly one dot from the right, if present
-        hostname = hostname[:-1]
-    if len(hostname) > 253:
-        return False
-
-    labels = hostname.split(".")
-
-    # the TLD must be not all-numeric
-    if re.match(r"[0-9]+$", labels[-1]):
-        return False
-
-    allowed = re.compile(r"(?!-)[a-z0-9-]{1,63}(?<!-)$")
-    return all(allowed.match(label) for label in labels)
-
-@register
+@agentlib.register
 def test():
     print("test")
 
-@register
+@agentlib.register
 def new_instance(name, uid, http_port, gevent_port):
     assert isinstance(name, str)
     assert isinstance(uid, str)
     assert isinstance(http_port, int)
     assert isinstance(gevent_port, int)
-    assert _is_valid_hostname(name)
+    assert agentlib.is_valid_hostname(name)
     try:
         int(uid, 16)
     except ValueError:
@@ -107,18 +88,6 @@ def new_instance(name, uid, http_port, gevent_port):
         ['docker', 'restart', uid],
     ]
 
-    class SubprocessError(Exception): pass
     for cmd in commands:
-        try:
-            subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=True,
-                encoding='utf-8',
-            )
-        except subprocess.CalledProcessError as error:
-            msg = error.stderr or error.stdout
-            cmd = ' '.join(error.cmd)
-            raise SubprocessError(f'{msg}\n\n{cmd}')
+        agentlib.execute(cmd)
 
