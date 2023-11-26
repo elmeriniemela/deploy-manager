@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import socket
 
 _logger = logging.getLogger(__name__)
 
@@ -28,20 +29,60 @@ def execute(cmd):
         cmd = ' '.join(error.cmd)
         raise SubprocessError(f'{msg}\n\n{cmd}')
 
+def validate(**kwargs):
+    validators = {
+        'hostname': is_valid_hostname,
+        'uid': is_valid_uid,
+        'http_port': is_valid_port,
+        'gevent_port': is_valid_port,
+    }
+    missing = set(kwargs.keys()) - set(validators.keys())
+    if missing:
+        raise ValueError("Validator not found for %s" % missing)
+
+    for key, value in kwargs.items():
+        resp = validators[key](value)
+        assert resp, "Validator for '%s' returned '%s'" % (key, resp)
+
+
+def is_valid_port(port):
+    assert isinstance(port, int), "Port should be an integer."
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        resp = sock.connect_ex(('127.0.0.1', port))
+    finally:
+        sock.close()
+    if resp != 111:
+        _logger.info("Port responed with %s.", resp)
+        raise ValueError("Port %s is already in use." % port)
+
+def is_valid_uid(uid):
+    assert isinstance(uid, str), "UID should be a string"
+    try:
+        int(uid, 16)
+    except ValueError:
+        raise ValueError("Invalid UID, expected a hexadecimal number.")
+    return True
+
 def is_valid_hostname(hostname):
+    assert isinstance(hostname, str), "Hostname should be a string."
     import re
     # https://stackoverflow.com/a/33214423
     if hostname[-1] == ".":
         # strip exactly one dot from the right, if present
         hostname = hostname[:-1]
     if len(hostname) > 253:
-        return False
+        raise ValueError("The hostname can't be longer than 253 characters.")
 
     labels = hostname.split(".")
 
     # the TLD must be not all-numeric
     if re.match(r"[0-9]+$", labels[-1]):
-        return False
+        raise ValueError("The top level domain must be not all-numeric.")
 
     allowed = re.compile(r"(?!-)[a-z0-9-]{1,63}(?<!-)$")
-    return all(allowed.match(label) for label in labels)
+    for label in labels:
+        if not allowed.match(label):
+            raise ValueError("Invalid characters in '%s'. Not allowed for a domain name.")
+
+    return True

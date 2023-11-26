@@ -14,29 +14,23 @@ def test():
     print("test")
 
 @agentlib.register
-def new_instance(name, uid, http_port, gevent_port):
-    assert isinstance(name, str)
-    assert isinstance(uid, str)
-    assert isinstance(http_port, int)
-    assert isinstance(gevent_port, int)
-    assert agentlib.is_valid_hostname(name)
-    try:
-        int(uid, 16)
-    except ValueError:
-        raise ValueError("Invalid UID, expected a hexadecimal number.")
+def restart(uid):
+    agentlib.validate(uid=uid)
+    agentlib.execute(['docker', 'restart', uid])
 
-    for p in [http_port, gevent_port]:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            resp = sock.connect_ex(('127.0.0.1', p))
-        finally:
-            sock.close()
-        if resp != 111:
-            _logger.info("Port responed with %s.", resp)
-            raise ValueError("Port %s is already in use." % p)
+@agentlib.register
+def start(uid):
+    agentlib.validate(uid=uid)
+    agentlib.execute(['docker', 'start', uid])
 
+@agentlib.register
+def stop(uid):
+    agentlib.validate(uid=uid)
+    agentlib.execute(['docker', 'stop', uid])
 
-
+@agentlib.register
+def new_instance(hostname, uid, http_port, gevent_port):
+    agentlib.validate(hostname=hostname, uid=uid, http_port=http_port, gevent_port=gevent_port)
     pw = secrets.token_hex(32)
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),
