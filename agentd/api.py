@@ -29,7 +29,12 @@ def stop(uid):
     agentlib.execute(['docker', 'stop', uid])
 
 @agentlib.register
-def new_instance(hostname, uid, http_port, gevent_port):
+def remove(hostname, uid):
+    agentlib.execute(['docker', 'rm', uid])
+
+
+@agentlib.register
+def create(hostname, uid, http_port, gevent_port):
     agentlib.validate(hostname=hostname, uid=uid, http_port=http_port, gevent_port=gevent_port)
     pw = secrets.token_hex(32)
     queries = [
