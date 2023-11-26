@@ -22,6 +22,7 @@ def new_instance(name, uid, http_port, gevent_port):
     ]
     with psycopg2.connect(dbname='postgres') as conn:
         conn.set_session(autocommit=True) # CREATE DATABASE cannot be run inside a transaction block.
+        conn.commit()
         with conn.cursor() as cur:
             for args in queries:
                 cur.execute(*args)
