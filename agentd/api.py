@@ -39,7 +39,7 @@ def new_instance(name, uid, http_port, gevent_port):
         template = Template(fp.read())
 
     conf = template.render(uid=uid, pw=pw)
-    os.makedirs(f'/etc/odoo/{uid}', mode=0o700, exist_ok=True)
+    os.makedirs(f'/etc/odoo/{uid}', mode=0o755, exist_ok=True)
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
 
