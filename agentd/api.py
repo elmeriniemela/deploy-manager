@@ -29,13 +29,13 @@ def stop(uid):
     agentlib.execute(['docker', 'stop', uid])
 
 @agentlib.register
-def remove(hostname, uid):
+def remove(uid, hostname):
+    agentlib.validate(uid=uid, hostname=hostname)
     agentlib.execute(['docker', 'rm', uid])
 
-
 @agentlib.register
-def create(hostname, uid, http_port, gevent_port):
-    agentlib.validate(hostname=hostname, uid=uid, http_port=http_port, gevent_port=gevent_port)
+def create(uid, hostname, http_port, gevent_port):
+    agentlib.validate(uid=uid, hostname=hostname, http_port=http_port, gevent_port=gevent_port)
     pw = secrets.token_hex(32)
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),
