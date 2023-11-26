@@ -55,6 +55,7 @@ def is_valid_port(port):
     if resp != 111:
         _logger.info("Port responed with %s.", resp)
         raise ValueError("Port %s is already in use." % port)
+    return True
 
 def is_valid_uid(uid):
     assert isinstance(uid, str), "UID should be a string"
