@@ -43,7 +43,7 @@ def new_instance(name, uid, http_port, gevent_port):
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
 
-    resp = subprocess.run(
+    subprocess.run(
         [
             'docker', 'run',
             '-v', f'/opt/odoo-agent/src:/mnt:ro',
@@ -57,6 +57,27 @@ def new_instance(name, uid, http_port, gevent_port):
             '--name', uid,
             '-t', '-d', 'odoo-src:16.0',
         ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+        encoding='utf-8',
+    )
+
+    subprocess.run(
+        [
+            'docker', 'exec', '-it', uid, 'odoo',
+            '--init=base',
+            '--http-port=9999',
+            '-stop-after-init',
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+        encoding='utf-8',
+    )
+
+    subprocess.run(
+        ['docker', 'restart', uid],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=True,
