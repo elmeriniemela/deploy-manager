@@ -60,3 +60,4 @@
 * Docker logs
 * Docker volumes: `ls /var/lib/docker/volumes`
 * Delete everything: `docker system prune -a --volumes`
+* Mount storagebox `rclone mount storagebox: /root/storagebox --daemon`

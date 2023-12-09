@@ -53,7 +53,7 @@ def create(uid, hostname, http_port, gevent_port):
 
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
-        mapping[hostname] = port
+        mapping[hostname] = f'127.0.0.1:{port}'
         agentlib.store_nginx_map(fname, match, target, mapping)
 
     agentlib.execute(['systemctl', 'reload', 'nginx'])
