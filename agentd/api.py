@@ -8,7 +8,10 @@ _logger = logging.getLogger(__name__)
 
 @agentlib.register
 def status():
-    return requests.get('http://127.0.0.1:2375/containers/json').json()
+    return requests.get(
+        url='http://127.0.0.1:2375/containers/json',
+        params={'all': True},
+    ).json()
 
 @agentlib.register
 def restart(uid):
