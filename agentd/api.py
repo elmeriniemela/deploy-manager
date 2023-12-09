@@ -2,12 +2,18 @@ import logging
 from psycopg2 import sql
 import secrets
 import agentlib
+import requests
 _logger = logging.getLogger(__name__)
 
 
 @agentlib.register
 def test():
     print("test")
+
+
+@agentlib.register
+def status():
+    return requests.get('http://127.0.0.1:2375/containers/json').json()
 
 @agentlib.register
 def restart(uid):
