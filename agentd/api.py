@@ -7,11 +7,6 @@ _logger = logging.getLogger(__name__)
 
 
 @agentlib.register
-def test():
-    print("test")
-
-
-@agentlib.register
 def status():
     return requests.get('http://127.0.0.1:2375/containers/json').json()
 
@@ -83,6 +78,7 @@ def create(uid, hostname, http_port, gevent_port):
             '-p', f'[::1]:{http_port}:8069',
             '-p', f'127.0.0.1:{gevent_port}:8072',
             '-p', f'[::1]:{gevent_port}:8072',
+            '--restart', 'unless-stopped',
             '--name', uid,
             '-t', '-d', 'odoo-src:16.0',
         ],
