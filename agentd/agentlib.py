@@ -25,7 +25,7 @@ def load_nginx_map(fname):
     [(match, target)] = re.findall(r'map\s+(\$[\w]+)\s+(\$[\w]+)\s+{', lines[0])
 
     for line in lines[1:]:
-        for key, value in re.findall(r'\s+([\w:\.]+)\s+([\w:\.]+);', line):
+        for key, value in re.findall(r'\s+([\w:\.-]+)\s+([\w:\.-]+);', line):
             mapping[key] = value
 
     return match, target, mapping
