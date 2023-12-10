@@ -44,7 +44,7 @@ def render_odoo_config(uid, pw):
         template = Template(fp.read(), keep_trailing_newline=True)
 
     conf = template.render(uid=uid, pw=pw)
-    save_odoo_config(conf, uid)
+    save_odoo_config(uid, conf)
     return conf
 
 def save_odoo_config(uid, conf):
