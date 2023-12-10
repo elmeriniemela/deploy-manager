@@ -63,6 +63,7 @@ def reset(uid):
     ]
     agentlib.psql(queries)
     commands = [
+        ['docker', 'start', uid],
         [
             'docker', 'exec', '-it', uid, 'odoo',
             '--init=base',
