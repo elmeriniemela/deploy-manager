@@ -62,9 +62,7 @@ def reset(uid):
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
     agentlib.psql(queries)
-    agentlib.execute(['docker', 'volume', 'rm', uid])
     commands = [
-        ['docker', 'volume', 'rm', uid],
         [
             'docker', 'exec', '-it', uid, 'odoo',
             '--init=base',
