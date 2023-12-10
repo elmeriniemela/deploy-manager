@@ -47,13 +47,43 @@ def remove(uid, hostname):
 
     agentlib.execute(['docker', 'volume', 'rm', uid])
 
+@agentlib.register
+def config(uid, conf):
+    agentlib.validate(uid=uid)
+    agentlib.save_odoo_config(uid, conf)
+
+
+@agentlib.register
+def reset(uid):
+    agentlib.validate(uid=uid)
+    queries = [
+        (sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(uid)),),
+        (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
+        (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
+    ]
+    agentlib.psql(queries)
+    agentlib.execute(['docker', 'volume', 'rm', uid])
+    commands = [
+        ['docker', 'volume', 'rm', uid],
+        [
+            'docker', 'exec', '-it', uid, 'odoo',
+            '--init=base',
+            '--http-port=9999',
+            '--stop-after-init',
+        ],
+        ['docker', 'restart', uid],
+    ]
+
+    for cmd in commands:
+        agentlib.execute(cmd)
+
 
 @agentlib.register
 def create(uid, hostname, http_port, gevent_port):
     agentlib.validate(uid=uid, hostname=hostname, http_port=http_port, gevent_port=gevent_port)
     pw = secrets.token_hex(32)
 
-    agentlib.store_odoo_config(uid, pw)
+    config = agentlib.render_odoo_config(uid, pw)
 
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
@@ -97,3 +127,4 @@ def create(uid, hostname, http_port, gevent_port):
     for cmd in commands:
         agentlib.execute(cmd)
 
+    return config

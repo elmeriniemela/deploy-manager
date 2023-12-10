@@ -39,11 +39,15 @@ def store_nginx_map(fname, match, target, mapping):
         fp.write(conf)
 
 
-def store_odoo_config(uid, pw):
+def render_odoo_config(uid, pw):
     with open('templates/odoo.conf') as fp:
         template = Template(fp.read(), keep_trailing_newline=True)
 
     conf = template.render(uid=uid, pw=pw)
+    save_odoo_config(conf, uid)
+    return conf
+
+def save_odoo_config(uid, conf):
     os.makedirs(f'/etc/odoo/{uid}', mode=0o755, exist_ok=True)
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
