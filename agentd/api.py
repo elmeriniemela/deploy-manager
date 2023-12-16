@@ -23,6 +23,7 @@ def backup(uid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
     commands = [
         ['rclone', 'sync', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/{uid}'],
+        ['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'],
         ['pg_dump', '-Fc', '-f', f'/root/storagebox/{uid}/{now}_{uid}.pgc', uid],
     ]
     for cmd in commands:
