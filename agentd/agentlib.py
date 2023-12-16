@@ -72,6 +72,7 @@ class SubprocessError(Exception): pass
 
 def execute(cmd):
     try:
+        _logger.info(cmd)
         subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
