@@ -1,5 +1,6 @@
 import logging
 from psycopg2 import sql
+import glob
 import secrets
 import agentlib
 import requests
@@ -10,10 +11,25 @@ _logger = logging.getLogger(__name__)
 
 @agentlib.register
 def status():
-    return requests.get(
+    status = []
+    docker_ps_a = requests.get(
         url='http://127.0.0.1:2375/containers/json',
         params={'all': True},
     ).json()
+    for container in docker_ps_a:
+        uid = container['Names'][0].lstrip('/')
+
+        backups = glob.glob(f'/root/storagebox/{uid}/*.pgc')
+
+        status.append({
+            'uid': uid,
+            'docker': container,
+            'backups': backups,
+        })
+
+    return status
+
+
 
 
 @agentlib.register
@@ -22,9 +38,9 @@ def backup(uid):
     os.makedirs(f'/root/storagebox/{uid}', mode=0o700, exist_ok=True)
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
     commands = [
-        ['rclone', 'sync', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/{uid}'],
+        ['rclone', 'sync', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/filestore'],
         ['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'],
-        ['pg_dump', '-Fc', '-f', f'/root/storagebox/{uid}/{now}_{uid}.pgc', uid],
+        ['pg_dump', '-Fc', '-f', f'/root/storagebox/{uid}/{now}.pgc', uid],
     ]
     for cmd in commands:
         agentlib.execute(cmd)
