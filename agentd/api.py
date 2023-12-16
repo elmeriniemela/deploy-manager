@@ -3,6 +3,8 @@ from psycopg2 import sql
 import secrets
 import agentlib
 import requests
+import os
+import datetime
 _logger = logging.getLogger(__name__)
 
 
@@ -12,6 +14,20 @@ def status():
         url='http://127.0.0.1:2375/containers/json',
         params={'all': True},
     ).json()
+
+
+@agentlib.register
+def backup(uid):
+    agentlib.validate(uid=uid)
+    os.makedirs(f'/root/storagebox/{uid}', mode=0o700, exist_ok=True)
+    now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
+    commands = [
+        ['rclone', 'sync', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/{uid}'],
+        ['pg_dump', '-Fc', '-f', f'/root/storagebox/{uid}/{now}_{uid}.pgc', {uid}],
+    ]
+    for cmd in commands:
+        agentlib.execute(cmd)
+
 
 @agentlib.register
 def restart(uid):
