@@ -39,6 +39,8 @@ RUN apt-get update && \
         python3-paramiko \
         python3-cryptography \
         python3-openpyxl \
+        python3-numpy \
+        python3-tinyrpc \
         python3-pandas \
         python3-xmltodict \
         python3-dicttoxml \
