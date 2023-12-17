@@ -19,7 +19,11 @@ def status():
     for container in docker_ps_a:
         uid = container['Names'][0].lstrip('/')
 
-        backups = glob.glob(f'/root/storagebox/{uid}/*.pgc')
+        backups = []
+        for path in glob.glob(f'/root/storagebox/{uid}/*.pgc'):
+            backups.append({
+                'fname': os.path.basename(path),
+            })
 
         status.append({
             'uid': uid,
