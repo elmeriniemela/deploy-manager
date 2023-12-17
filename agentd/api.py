@@ -10,19 +10,32 @@ _logger = logging.getLogger(__name__)
 
 @agentlib.register
 def status():
-    status = []
+    instances = []
     docker_ps_a = requests.get(
         url='http://127.0.0.1:2375/containers/json',
         params={'all': True},
     ).json()
+
     for container in docker_ps_a:
         uid = container['Names'][0].lstrip('/')
-        status.append({
+        instances.append({
             'uid': uid,
             'docker': container,
             'backups': agentlib.list_backups(uid),
         })
 
+    with agentlib.psql() as cur:
+        cur.execute("select * from pg_catalog.pg_database")
+        pg_databases = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
+        cur.execute("select * from pg_catalog.pg_user")
+        pg_users = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
+
+
+    status = {
+        'instances': instances,
+        'pg_users': pg_users,
+        'pg_databases': pg_databases,
+    }
     return status
 
 
@@ -50,7 +63,10 @@ def restore(src_uid, dst_uid, backup_file):
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(dst_uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(dst_uid)),),
     ]
-    agentlib.psql(queries)
+    with agentlib.psql() as cur:
+        for args in queries:
+            cur.execute(*args)
+
     commands = [
         ['rclone', 'copy', '--bind', '0.0.0.0', '--ignore-checksum', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
@@ -80,19 +96,24 @@ def stop(uid):
 @agentlib.register
 def remove(uid, hostname):
     agentlib.validate(uid=uid, hostname=hostname)
-    agentlib.execute(['docker', 'rm', uid])
+    curstatus = status()
+    existing_containers = {v['uid'] for v in curstatus['instances']}
+    if uid in existing_containers:
+        agentlib.execute(['docker', 'rm', uid])
 
     for fname in ['gevent-ports.conf', 'http-ports.conf']:
         match, target, mapping = agentlib.load_nginx_map(fname)
-        mapping.pop(hostname)
+        mapping.pop(hostname, None)
         agentlib.store_nginx_map(fname, match, target, mapping)
     agentlib.execute(['systemctl', 'reload', 'nginx'])
 
-    queries = [
-        (sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(uid)),),
-        (sql.SQL("DROP USER {uid}").format(uid=sql.Identifier(uid)),),
-    ]
-    agentlib.psql(queries)
+    existing_dbs = {v['datname'] for v in curstatus['pg_databases']}
+    existing_users = {v['usename'] for v in curstatus['pg_users']}
+    with agentlib.psql() as cur:
+        if uid in existing_dbs:
+            cur.execute(sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(uid)),)
+        if uid in existing_users:
+            cur.execute(sql.SQL("DROP USER {uid}").format(uid=sql.Identifier(uid)),)
 
     agentlib.execute(['docker', 'volume', 'rm', uid])
 
@@ -134,7 +155,10 @@ def reset(uid):
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
-    agentlib.psql(queries)
+    with agentlib.psql() as cur:
+        for args in queries:
+            cur.execute(*args)
+
     commands = [
         ['docker', 'start', uid],
         [
@@ -149,9 +173,8 @@ def reset(uid):
     for cmd in commands:
         agentlib.execute(cmd)
 
-    agentlib.psql([
-        (sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
-    ], dbname=uid)
+    with agentlib.psql(dbname=uid) as cur:
+        cur.execute(sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
 
 
 @agentlib.register
@@ -174,7 +197,9 @@ def create(uid, hostname, http_port, gevent_port):
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
-    agentlib.psql(queries)
+    with agentlib.psql() as cur:
+        for args in queries:
+            cur.execute(*args)
 
     commands = [
         [
@@ -203,8 +228,7 @@ def create(uid, hostname, http_port, gevent_port):
     for cmd in commands:
         agentlib.execute(cmd)
 
-    agentlib.psql([
-        (sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
-    ], dbname=uid)
+    with agentlib.psql(dbname=uid) as cur:
+        cur.execute(sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
 
     return config
