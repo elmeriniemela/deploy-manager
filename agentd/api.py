@@ -116,7 +116,6 @@ def rebuild(uid, http_port, gevent_port):
             '--name', uid,
             '-t', '-d', 'odoo-src:16.0',
         ],
-        ['docker', 'restart', uid],
     ]
     for cmd in commands:
         agentlib.execute(cmd)
