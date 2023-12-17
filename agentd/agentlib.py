@@ -77,7 +77,10 @@ def psql(dbname='postgres'):
         conn = psycopg2.connect(dbname=dbname)
         conn.set_session(autocommit=True) # CREATE DATABASE cannot be run inside a transaction block.
         cur = conn.cursor()
-        yield cur
+        def logged_cur(*args, **kwargs):
+            _logger.info(args or '', kwargs or '')
+            return cur(*args, **kwargs)
+        yield logged_cur
     finally:
         if cur:
             cur.close()
