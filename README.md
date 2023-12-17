@@ -21,7 +21,7 @@
 
 #### Building the image
 * `cd docker`
-* `docker build -t odoo-src:16.0 /opt/odoo-agent/docker`
+* `docker build -t odoo-src:16.0 /opt/odoo-agent`
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`

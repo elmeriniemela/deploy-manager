@@ -118,7 +118,7 @@ RUN apt-get update && \
 
 # Install rtlcss (on Debian buster)
 RUN npm install -g rtlcss
-COPY ./../src/extra-addons/requirements.txt /requirements.txt
+COPY src/extra-addons/requirements.txt /requirements.txt
 RUN pip3 install -r /requirements.txt
 
 RUN useradd -ms /bin/bash odoo
