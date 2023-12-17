@@ -61,10 +61,10 @@ def list_backups(uid):
         })
     return backups
 
-def psql(queries):
+def psql(queries, dbname='postgres'):
     cur = conn = None
     try:
-        conn = psycopg2.connect(dbname='postgres')
+        conn = psycopg2.connect(dbname=dbname)
         conn.set_session(autocommit=True) # CREATE DATABASE cannot be run inside a transaction block.
         cur = conn.cursor()
         for args in queries:
