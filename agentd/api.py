@@ -54,7 +54,7 @@ def restore(src_uid, dst_uid, backup_file):
     commands = [
         ['rclone', 'copy', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'],
-        ['pg_restore', '-Fc', '-f', f'/root/storagebox/{src_uid}/{backup_file}', '-d', dst_uid],
+        ['pg_restore', '-Fc', '-d', dst_uid, f'/root/storagebox/{src_uid}/{backup_file}'],
         ['docker', 'restart', dst_uid],
     ]
     for cmd in commands:
