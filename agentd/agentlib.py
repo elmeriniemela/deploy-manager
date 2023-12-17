@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 
 def register(func):
     def wraps(*args): #XML-RPC doesn't have a concept of 'keyword arguments'
-        _logger.info(f"Call {func.__name__}{args}")
+        _logger.debug(f"Call {func.__name__}{args}")
         return func(*args)
     wraps._rpc = True
     wraps.__name__ = func.__name__
@@ -91,7 +91,7 @@ class SubprocessError(Exception): pass
 
 def execute(cmd):
     try:
-        _logger.info(cmd)
+        _logger.debug(cmd)
         subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
@@ -128,7 +128,7 @@ def is_valid_port(port):
     finally:
         sock.close()
     if resp != 111:
-        _logger.info("Port responed with %s.", resp)
+        _logger.debug("Port responed with %s.", resp)
         raise ValueError("Port %s is already in use." % port)
     return True
 
