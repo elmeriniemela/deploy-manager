@@ -7,6 +7,7 @@ from jinja2 import Template
 import os
 import glob
 from contextlib import contextmanager
+from psycopg2.extras import LoggingConnection
 
 _logger = logging.getLogger(__name__)
 
@@ -74,13 +75,11 @@ def list_backups(uid):
 def psql(dbname='postgres'):
     cur = conn = None
     try:
-        conn = psycopg2.connect(dbname=dbname)
+        conn = psycopg2.connect(dbname=dbname, connection_factory=LoggingConnection)
+        conn.initialize(_logger)
         conn.set_session(autocommit=True) # CREATE DATABASE cannot be run inside a transaction block.
         cur = conn.cursor()
-        def logged_cur(*args, **kwargs):
-            _logger.info(args or '', kwargs or '')
-            return cur(*args, **kwargs)
-        yield logged_cur
+        yield cur
     finally:
         if cur:
             cur.close()
