@@ -4,6 +4,7 @@ set -e
 
 apt update
 apt install postgresql nginx ca-certificates curl gnupg vim tmux
+apt install certbot python3-certbot-nginx
 
 systemctl enable nginx --now
 systemctl enable postgresql --now
@@ -18,5 +19,9 @@ apt update
 apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 curl https://rclone.org/install.sh | sudo bash
+
+cp systemd/system/odoo-agent.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable odoo-agent.service --now
 
 exit 1

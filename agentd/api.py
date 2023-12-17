@@ -150,6 +150,10 @@ def reset(uid):
     for cmd in commands:
         agentlib.execute(cmd)
 
+    agentlib.psql([
+        (sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
+    ])
+
 
 @agentlib.register
 def create(uid, hostname, http_port, gevent_port):
@@ -199,5 +203,9 @@ def create(uid, hostname, http_port, gevent_port):
 
     for cmd in commands:
         agentlib.execute(cmd)
+
+    agentlib.psql([
+        (sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
+    ])
 
     return config
