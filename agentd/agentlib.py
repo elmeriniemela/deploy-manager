@@ -56,7 +56,7 @@ def save_odoo_config(uid, conf):
 def ensure_storagebox():
     check = '/root/storagebox/.ssh/authorized_keys'
     if not os.path.isfile(check):
-        execute(['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'])
+        execute(['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full', '--bind', '0.0.0.0', '--ignore-checksum'])
     assert os.path.isfile(check), check
 
 
