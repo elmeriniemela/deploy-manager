@@ -1,6 +1,5 @@
 import logging
 from psycopg2 import sql
-import glob
 import secrets
 import agentlib
 import requests
@@ -18,22 +17,13 @@ def status():
     ).json()
     for container in docker_ps_a:
         uid = container['Names'][0].lstrip('/')
-
-        backups = []
-        for path in glob.glob(f'/root/storagebox/{uid}/*.pgc'):
-            backups.append({
-                'fname': os.path.basename(path),
-            })
-
         status.append({
             'uid': uid,
             'docker': container,
-            'backups': backups,
+            'backups': agentlib.list_backups(uid),
         })
 
     return status
-
-
 
 
 @agentlib.register
@@ -48,6 +38,8 @@ def backup(uid):
     ]
     for cmd in commands:
         agentlib.execute(cmd)
+
+    return agentlib.list_backups(uid)
 
 @agentlib.register
 def restore(src_uid, dst_uid, backup_file):

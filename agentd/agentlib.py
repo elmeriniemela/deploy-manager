@@ -5,6 +5,7 @@ import psycopg2
 import re
 from jinja2 import Template
 import os
+import glob
 
 _logger = logging.getLogger(__name__)
 
@@ -52,6 +53,13 @@ def save_odoo_config(uid, conf):
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
 
+def list_backups(uid):
+    backups = []
+    for path in glob.glob(f'/root/storagebox/{uid}/*.pgc'):
+        backups.append({
+            'fname': os.path.basename(path),
+        })
+    return backups
 
 def psql(queries):
     cur = conn = None
