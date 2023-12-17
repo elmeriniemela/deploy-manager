@@ -52,9 +52,9 @@ def restore(src_uid, dst_uid, backup_file):
     ]
     agentlib.psql(queries)
     commands = [
-        ['rclone', 'copy', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{src_uid}/_data/filestore/{src_uid}'],
+        ['rclone', 'copy', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'],
-        ['pg_dump', '-Fc', '-f', f'/root/storagebox/{dst_uid}/{backup_file}', '-d', dst_uid],
+        ['pg_dump', '-Fc', '-f', f'/root/storagebox/{src_uid}/{backup_file}', '-d', dst_uid],
         ['docker', 'restart', dst_uid],
     ]
     for cmd in commands:
