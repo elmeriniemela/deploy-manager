@@ -33,7 +33,6 @@ def backup(uid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
     commands = [
         ['rclone', 'sync', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/filestore'],
-        ['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'],
         ['pg_dump', '-Fc', '-f', f'/root/storagebox/{uid}/{now}.pgc', uid],
     ]
     for cmd in commands:
@@ -45,6 +44,7 @@ def backup(uid):
 def restore(src_uid, dst_uid, backup_file):
     agentlib.validate(uid=src_uid)
     agentlib.validate(uid=dst_uid)
+    agentlib.ensure_storagebox()
     queries = [
         (sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(dst_uid)),),
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(dst_uid)),),
@@ -54,7 +54,6 @@ def restore(src_uid, dst_uid, backup_file):
     commands = [
         ['rclone', 'copy', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
-        ['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'],
         ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, f'/root/storagebox/{src_uid}/{backup_file}'],
         ['docker', 'restart', dst_uid],
     ]

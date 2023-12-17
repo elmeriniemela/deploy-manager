@@ -53,7 +53,15 @@ def save_odoo_config(uid, conf):
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
 
+def ensure_storagebox():
+    check = '/root/storagebox/.ssh/authorized_keys'
+    if not os.path.isfile(check):
+        execute(['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full'])
+    assert os.path.isfile(check), check
+
+
 def list_backups(uid):
+    ensure_storagebox()
     backups = []
     for path in glob.glob(f'/root/storagebox/{uid}/*.pgc'):
         backups.append({
