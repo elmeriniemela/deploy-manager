@@ -52,7 +52,7 @@ def restore(src_uid, dst_uid, backup_file):
     ]
     agentlib.psql(queries)
     commands = [
-        ['rclone', 'copy', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
+        ['rclone', 'copy', '--bind', '0.0.0.0', '--ignore-checksum', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
         ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, f'/root/storagebox/{src_uid}/{backup_file}'],
         ['docker', 'restart', dst_uid],
