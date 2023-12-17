@@ -14,3 +14,7 @@
 	path = src/extra-addons
 	url = git@github.com:elmeriniemela/odoo_addons.git
 	branch = 16.0
+[submodule "src/muk_web"]
+	path = src/muk_web
+	url = git@github.com:muk-it/muk_web.git
+	branch = 16.0

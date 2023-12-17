@@ -31,6 +31,7 @@ RUN apt-get update && \
         git \
         build-essential \
         libgmp-dev \
+        libsecp256k1-dev \
         postgresql-client \
         python3-dev \
         python3-gevent \

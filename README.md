@@ -63,3 +63,4 @@
 * Remote access: https://docs.docker.com/config/daemon/remote-access/
 * Docker API: https://docs.docker.com/engine/api/latest/
 * Mount storagebox `rclone mount storagebox: /root/storagebox --daemon`
+* Login as root: `docker exec -it -u root <uid> bash`
