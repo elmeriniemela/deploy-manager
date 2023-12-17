@@ -118,8 +118,8 @@ RUN apt-get update && \
 
 # Install rtlcss (on Debian buster)
 RUN npm install -g rtlcss
-
-COPY ./entrypoint.sh /
+COPY ./../src/extra-addons/requirements.txt /requirements.txt
+RUN pip3 install -r /requirements.txt
 
 RUN useradd -ms /bin/bash odoo
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt for users addons
@@ -138,5 +138,4 @@ ENV ODOO_RC /etc/odoo/odoo.conf
 # Set default user when running the container
 USER odoo
 
-ENTRYPOINT ["/entrypoint.sh"]
 CMD ["odoo"]
