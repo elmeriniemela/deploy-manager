@@ -1,0 +1,14 @@
+[Unit]
+Description=odoo-agent
+
+[Service]
+User=root
+WorkingDirectory=/opt/odoo-agent
+ExecStart=python3 /opt/odoo-agent/agentd/run.py
+Restart=always
+RestartSec=5
+StartLimitInterval=400
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target
