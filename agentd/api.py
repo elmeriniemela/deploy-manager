@@ -139,7 +139,7 @@ def reset(uid):
     commands = [
         ['docker', 'start', uid],
         [
-            'docker', 'exec', '-it', uid, 'odoo',
+            'docker', 'exec', uid, 'odoo',
             '--init=base',
             '--http-port=9999',
             '--stop-after-init',
@@ -193,7 +193,7 @@ def create(uid, hostname, http_port, gevent_port):
             '-t', '-d', 'odoo-src:16.0',
         ],
         [
-            'docker', 'exec', '-it', uid, 'odoo',
+            'docker', 'exec', uid, 'odoo',
             '--init=base',
             '--http-port=9999',
             '--stop-after-init',
