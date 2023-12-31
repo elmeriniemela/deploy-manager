@@ -32,16 +32,21 @@ if __name__ == "__main__":
             if getattr(obj, '_rpc', None):
                 server.register_function(obj)
 
+        restart = False
+
         def agent_restart():
+            global restart
             _logger.info("Restarting agent..")
             server.shutdown()
+            restart = True
 
         server.register_function(agent_restart)
 
         _logger.info(f'Available functions: {list(server.funcs.keys())}')
         try:
             server.serve_forever()
-            sys.exit(2) # If the loop ended, its considered a failure -> systemd will restart.
+            if restart:
+                sys.exit(2) # If the loop ended, its considered a failure -> systemd will restart.
         except KeyboardInterrupt:
             _logger.info("Keyboard interrupt received, exiting.")
             sys.exit(0)
