@@ -41,7 +41,7 @@ if __name__ == "__main__":
         _logger.info(f'Available functions: {list(server.funcs.keys())}')
         try:
             server.serve_forever()
-            sys.exit(2) # If the loop ended, its considered a failure -> systemd will restart.
+            sys.exit(1) # If the loop ended, its considered a failure -> systemd will restart.
         except KeyboardInterrupt:
             _logger.info("Keyboard interrupt received, exiting.")
             sys.exit(0)
