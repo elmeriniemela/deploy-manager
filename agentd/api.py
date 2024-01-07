@@ -5,6 +5,7 @@ import agentlib
 import requests
 import os
 import datetime
+import io
 _logger = logging.getLogger(__name__)
 
 
@@ -69,7 +70,7 @@ def agent_diff(version_range, include=None, exclude=None):
         for p in (include or []): filter_cmd.extend(['-i', p])
         for p in (exclude or []): filter_cmd.extend(['-x', p])
 
-        output = agentlib.execute(filter_cmd, stdin=output).stdout
+        output = agentlib.execute(filter_cmd, stdin=io.StringIO(output)).stdout
 
     return output
 
