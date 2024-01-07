@@ -38,6 +38,17 @@ def status():
     }
     return status
 
+@agentlib.register
+def agent_diff(version_range):
+    commands = [
+        ['git', 'fetch'],
+    ]
+    for cmd in commands:
+        agentlib.execute(cmd)
+
+    output = agentlib.execute(['git', 'diff', version_range])
+    return output.stdout
+
 
 @agentlib.register
 def backup(uid):
