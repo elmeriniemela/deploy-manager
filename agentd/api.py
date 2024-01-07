@@ -35,6 +35,9 @@ def status():
         'instances': instances,
         'pg_users': pg_users,
         'pg_databases': pg_databases,
+        'agent': {
+            'commit': agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout,
+        }
     }
     return status
 
