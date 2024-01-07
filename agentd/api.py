@@ -61,7 +61,7 @@ def agent_diff(version_range):
     for cmd in commands:
         agentlib.execute(cmd)
 
-    output = agentlib.execute(['git', 'diff', version_range])
+    output = agentlib.execute(['git', 'diff', '--submodule=diff', version_range])
     return output.stdout
 
 
