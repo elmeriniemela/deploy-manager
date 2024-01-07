@@ -64,7 +64,7 @@ def agent_diff(version_range, include=None, exclude=None):
 
     output = agentlib.execute(['git', 'diff', '--submodule=diff', version_range]).stdout
 
-    exclude = exclude or ['*.po', '**/tests/*']
+    exclude = exclude or ['*.po', '*.pot', '**/tests/*']
     if include or exclude:
         filter_cmd = ['filterdiff']
         for p in (include or []): filter_cmd.extend(['-i', p])
