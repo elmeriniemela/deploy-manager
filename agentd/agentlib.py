@@ -99,7 +99,7 @@ def execute(cmd, **kwargs):
             encoding='utf-8',
         )
         defaults.update(kwargs)
-        return subprocess.run(cmd, **kwargs)
+        return subprocess.run(cmd, **defaults)
     except subprocess.CalledProcessError as error:
         msg = error.stderr or error.stdout
         cmd = ' '.join(error.cmd)
