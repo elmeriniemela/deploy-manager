@@ -36,7 +36,7 @@ def status():
         'pg_users': pg_users,
         'pg_databases': pg_databases,
         'agent': {
-            'commit': agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout,
+            'commit': agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout.strip(),
         }
     }
     return status
@@ -50,8 +50,7 @@ def agent_pull(checkout):
     for cmd in commands:
         agentlib.execute(cmd)
 
-    output = agentlib.execute(['git', 'rev-parse', 'HEAD'])
-    return output.stdout
+    return agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout.strip()
 
 @agentlib.register
 def agent_diff(version_range):
