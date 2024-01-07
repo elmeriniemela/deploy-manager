@@ -39,6 +39,18 @@ def status():
     return status
 
 @agentlib.register
+def agent_pull(checkout):
+    commands = [
+        ['git', 'checkout', checkout],
+        ['git', 'submodule', 'update', '--init'],
+    ]
+    for cmd in commands:
+        agentlib.execute(cmd)
+
+    output = agentlib.execute(['git', 'rev-parse', 'HEAD'])
+    return output.stdout
+
+@agentlib.register
 def agent_diff(version_range):
     commands = [
         ['git', 'fetch'],
