@@ -44,6 +44,7 @@ def status():
 @agentlib.register
 def agent_pull(checkout):
     commands = [
+        ['git', 'pull'],
         ['git', 'checkout', checkout],
         ['git', 'submodule', 'update', '--init'],
     ]
@@ -53,15 +54,24 @@ def agent_pull(checkout):
     return agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout.strip()
 
 @agentlib.register
-def agent_diff(version_range):
+def agent_diff(version_range, include=None, exclude=None):
     commands = [
         ['git', 'fetch'],
     ]
     for cmd in commands:
         agentlib.execute(cmd)
 
-    output = agentlib.execute(['git', 'diff', '--submodule=diff', version_range])
-    return output.stdout
+    output = agentlib.execute(['git', 'diff', '--submodule=diff', version_range]).stdout
+
+    exclude = exclude or ['*.po', '**/tests/*']
+    if include or exclude:
+        filter_cmd = ['filterdiff']
+        for p in include: filter_cmd.extend(['-i', p])
+        for p in exclude: filter_cmd.extend(['-x', p])
+
+        output = agentlib.execute(filter_cmd, stdin=output).stdout
+
+    return output
 
 
 @agentlib.register

@@ -89,16 +89,17 @@ def psql(dbname='postgres'):
 
 class SubprocessError(Exception): pass
 
-def execute(cmd):
+def execute(cmd, **kwargs):
     try:
         _logger.debug(cmd)
-        return subprocess.run(
-            cmd,
+        defaults = dict(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
             encoding='utf-8',
         )
+        defaults.update(kwargs)
+        return subprocess.run(cmd, **kwargs)
     except subprocess.CalledProcessError as error:
         msg = error.stderr or error.stdout
         cmd = ' '.join(error.cmd)
