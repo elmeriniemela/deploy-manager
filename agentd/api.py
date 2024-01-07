@@ -70,7 +70,7 @@ def agent_diff(version_range, include=None, exclude=None):
         for p in (include or []): filter_cmd.extend(['-i', p])
         for p in (exclude or []): filter_cmd.extend(['-x', p])
 
-        with tempfile.TemporaryFile() as fp:
+        with tempfile.TemporaryFile(mode='w') as fp:
             fp.write(output)
             fp.seek(0)
             output = agentlib.execute(filter_cmd, stdin=fp).stdout
