@@ -5,7 +5,7 @@ import agentlib
 import requests
 import os
 import datetime
-import io
+import tempfile
 _logger = logging.getLogger(__name__)
 
 
@@ -70,7 +70,10 @@ def agent_diff(version_range, include=None, exclude=None):
         for p in (include or []): filter_cmd.extend(['-i', p])
         for p in (exclude or []): filter_cmd.extend(['-x', p])
 
-        output = agentlib.execute(filter_cmd, stdin=io.StringIO(output)).stdout
+        with tempfile.TemporaryFile() as fp:
+            fp.write(output)
+            fp.seek(0)
+            output = agentlib.execute(filter_cmd, stdin=fp).stdout
 
     return output
 
