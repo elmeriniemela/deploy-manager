@@ -66,8 +66,8 @@ def agent_diff(version_range, include=None, exclude=None):
     exclude = exclude or ['*.po', '**/tests/*']
     if include or exclude:
         filter_cmd = ['filterdiff']
-        for p in include: filter_cmd.extend(['-i', p])
-        for p in exclude: filter_cmd.extend(['-x', p])
+        for p in (include or []): filter_cmd.extend(['-i', p])
+        for p in (exclude or []): filter_cmd.extend(['-x', p])
 
         output = agentlib.execute(filter_cmd, stdin=output).stdout
 
