@@ -23,7 +23,6 @@ def create_scheduled_backups():
     _logger.info(f"Creating scheduled backups for {len(insts)} instances.")
     for instance in insts:
         api.backup(instance['uid'], trigger=trigger)
-        _logger.info(f"Backup done {instance['uid']}")
 
 def delete_old_backups():
     pass
