@@ -82,7 +82,7 @@ def agent_diff(version_range, include=None, exclude=None):
 def backup(uid, trigger='manual'):
     _logger.info(f"Starting {trigger} backup for {uid}")
     agentlib.validate(uid=uid)
-    fname = agentlib.fname_to_ts(datetime.datetime.utcnow())
+    fname = agentlib.ts_to_fname(datetime.datetime.utcnow())
     commands = [
         ['rclone', 'copy', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/filestore'],
         ['pg_dump', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid],
