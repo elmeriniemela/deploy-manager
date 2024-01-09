@@ -69,7 +69,7 @@ def ts_to_fname(ts):
     return f"{ts.strftime('%Y-%m-%dT%H-%M-%S')}.pgc"
 
 def dump_path(uid, trigger, fname, makedirs=False):
-    dirs = f'root/storagebox/{uid}/{trigger}'
+    dirs = f'/root/storagebox/{uid}/{trigger}'
     if makedirs:
         os.makedirs(dirs, mode=0o700, exist_ok=True)
     return f'{dirs}/{fname}'
