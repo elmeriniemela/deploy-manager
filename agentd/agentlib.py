@@ -82,7 +82,7 @@ def list_backups(uid):
         fname = os.path.basename(path)
         backups.append({
             'fname': fname,
-            'timestamp': fname_to_ts(fname),
+            'timestamp': fname_to_ts(fname).strftime('%Y-%m-%d %H:%M:%S'), # Odoo DEFAULT_SERVER_DATETIME_FORMAT
             'trigger': os.path.basename(os.path.dirname(path)),
         })
     return backups
