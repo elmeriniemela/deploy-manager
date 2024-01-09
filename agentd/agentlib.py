@@ -8,6 +8,7 @@ import os
 import glob
 from contextlib import contextmanager
 from psycopg2.extras import LoggingConnection
+import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -61,13 +62,28 @@ def ensure_storagebox():
         execute(['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full', '--bind', '0.0.0.0', '--ignore-checksum'])
     assert os.path.isfile(check), check
 
+def fname_to_ts(fname):
+    return datetime.datetime.strptime(fname, '%Y-%m-%dT%H-%M-%S.pgc')
+
+def ts_to_fname(ts):
+    return f"{ts.strftime('%Y-%m-%dT%H-%M-%S')}.pgc"
+
+def dump_path(uid, trigger, fname, makedirs=False):
+    dirs = f'root/storagebox/{uid}/{trigger}'
+    if makedirs:
+        os.makedirs(dirs, mode=0o700, exist_ok=True)
+    return f'{dirs}/{fname}'
 
 def list_backups(uid):
     ensure_storagebox()
     backups = []
-    for path in glob.glob(f'/root/storagebox/{uid}/*.pgc'):
+
+    for path in glob.glob(dump_path(uid, '*', '*.pgc')):
+        fname = os.path.basename(path)
         backups.append({
-            'fname': os.path.basename(path),
+            'fname': fname,
+            'timestamp': fname_to_ts(fname),
+            'trigger': os.path.basename(os.path.dirname(path)),
         })
     return backups
 

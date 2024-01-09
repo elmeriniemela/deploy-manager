@@ -79,21 +79,22 @@ def agent_diff(version_range, include=None, exclude=None):
 
 
 @agentlib.register
-def backup(uid):
+def backup(uid, trigger='manual'):
+    _logger.info(f"Starting {trigger} backup for {uid}")
     agentlib.validate(uid=uid)
-    os.makedirs(f'/root/storagebox/{uid}', mode=0o700, exist_ok=True)
-    now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
+    fname = agentlib.fname_to_ts(datetime.datetime.utcnow())
     commands = [
-        ['rclone', 'sync', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/filestore'],
-        ['pg_dump', '-Fc', '-f', f'/root/storagebox/{uid}/{now}.pgc', uid],
+        ['rclone', 'copy', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/filestore'],
+        ['pg_dump', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid],
     ]
     for cmd in commands:
         agentlib.execute(cmd)
 
+    _logger.info(f"Backup done: {trigger} backup for {uid}")
     return agentlib.list_backups(uid)
 
 @agentlib.register
-def restore(src_uid, dst_uid, backup_file):
+def restore(src_uid, dst_uid, trigger, backup_file):
     agentlib.validate(uid=src_uid)
     agentlib.validate(uid=dst_uid)
     agentlib.ensure_storagebox()
@@ -109,7 +110,7 @@ def restore(src_uid, dst_uid, backup_file):
     commands = [
         ['rclone', 'copy', '--bind', '0.0.0.0', '--ignore-checksum', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
-        ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, f'/root/storagebox/{src_uid}/{backup_file}'],
+        ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, agentlib.dump_path(src_uid, trigger, backup_file)],
         ['docker', 'restart', dst_uid],
     ]
     for cmd in commands:
