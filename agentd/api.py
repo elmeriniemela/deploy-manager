@@ -3,7 +3,9 @@ from psycopg2 import sql
 import secrets
 import agentlib
 import requests
-import re
+import os
+import glob
+import ast
 import datetime
 import tempfile
 _logger = logging.getLogger(__name__)
@@ -119,12 +121,12 @@ def restore(src_uid, dst_uid, trigger, backup_file):
 @agentlib.register
 def upgrade(uid):
     agentlib.validate(uid=uid)
-    stdout = agentlib.execute(['grep', 'version', '-R', 'src/**/**/__manifest__.py']).stdout.strip()
     codever = {}
-    for line in stdout.splitlines():
-        parsed = re.findall(r'.*/([^/]+)/__manifest__.py:\s*["\']version["\']\s*:\s*["\'](.*?)["\']', line)
-        if len(parsed) == 2:
-            module, version = parsed
+    for fname in glob.glob('src/**/**/__manifest__.py'):
+        with open(fname, 'rb') as manifest:
+            d = ast.literal_eval(manifest.read().decode('latin1'))
+            version = d.get('version', '0.0')
+            module = os.path.basename(os.path.dirname(fname))
             if not version.startswith('16.0.'):
                 version = '16.0.' + version
             codever[module] = version
