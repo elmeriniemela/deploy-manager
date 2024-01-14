@@ -144,7 +144,9 @@ def upgrade(uid):
     if upgrade:
         joined_upgrade = ','.join(upgrade)
         proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
-        return (proc.stdout or proc.stderr).strip()
+        _logger.info(proc.stdout)
+        _logger.info(proc.stderr)
+        return joined_upgrade
     return None
 
 
