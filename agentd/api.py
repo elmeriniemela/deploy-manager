@@ -3,7 +3,7 @@ from psycopg2 import sql
 import secrets
 import agentlib
 import requests
-import os
+import re
 import datetime
 import tempfile
 _logger = logging.getLogger(__name__)
@@ -116,6 +116,35 @@ def restore(src_uid, dst_uid, trigger, backup_file):
     for cmd in commands:
         agentlib.execute(cmd)
 
+@agentlib.register
+def upgrade(uid):
+    agentlib.validate(uid=uid)
+    stdout = agentlib.execute(['grep', 'version', '-R', 'src/**/**/__manifest__.py']).stdout.strip()
+    codever = {}
+    for line in stdout.splitlines():
+        parsed = re.findall(r'.*/([^/]+)/__manifest__.py:\s*["\']version["\']\s*:\s*["\'](.*?)["\']', line)
+        if len(parsed) == 2:
+            module, version = parsed
+            if not version.startswith('16.0.'):
+                version = '16.0.' + version
+            codever[module] = version
+
+    _logger.info(codever)
+    with agentlib.psql() as cur:
+        cur.execute("select name, latest_version from ir_module_module where state='installed'")
+        dbver = {name: version for name, version in cur.fetchall()}
+
+    _logger.info(dbver)
+    upgrade = []
+    for module, db in dbver.items():
+        code = codever.get(module, '9999')
+        if agentlib.parse_version(code) > agentlib.parse_version(db):
+            upgrade.append(module)
+
+    if upgrade:
+        joined_upgrade = ','.join(upgrade)
+        return agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init']).stdout.strip()
+    return None
 
 
 @agentlib.register
