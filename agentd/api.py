@@ -131,21 +131,20 @@ def upgrade(uid):
                 version = '16.0.' + version
             codever[module] = version
 
-    _logger.info(codever)
     with agentlib.psql(dbname=uid) as cur:
         cur.execute("select name, latest_version from ir_module_module where state='installed'")
         dbver = {name: version for name, version in cur.fetchall()}
 
-    _logger.info(dbver)
     upgrade = []
     for module, db in dbver.items():
-        code = codever.get(module, '9999')
+        code = codever.get(module, '0.0')
         if agentlib.parse_version(code) > agentlib.parse_version(db):
             upgrade.append(module)
 
     if upgrade:
         joined_upgrade = ','.join(upgrade)
-        return agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init']).stdout.strip()
+        proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
+        return (proc.stdout or proc.stderr).strip()
     return None
 
 
