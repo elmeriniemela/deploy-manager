@@ -132,7 +132,7 @@ def upgrade(uid):
             codever[module] = version
 
     _logger.info(codever)
-    with agentlib.psql() as cur:
+    with agentlib.psql(dbname=uid) as cur:
         cur.execute("select name, latest_version from ir_module_module where state='installed'")
         dbver = {name: version for name, version in cur.fetchall()}
 
