@@ -4,6 +4,7 @@ import agentlib
 import datetime
 import logging
 import glob
+import os
 
 logging.basicConfig(
     level=logging.DEBUG,
