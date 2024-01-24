@@ -134,11 +134,14 @@ def list_backups(uid):
 
     for path in glob.glob(dump_path(uid, '*', '*.pgc')):
         fname = os.path.basename(path)
-        proc = execute([
-            'rclone', 'check',
-            '--one-way',
-            f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
-        ])
+        proc = execute(
+            cmd=[
+                'rclone', 'check',
+                '--one-way',
+                f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
+            ],
+            check=False,
+        )
         backups.append({
             'fname': fname,
             'timestamp': fname_to_ts(fname).strftime('%Y-%m-%d %H:%M:%S'), # Odoo DEFAULT_SERVER_DATETIME_FORMAT
