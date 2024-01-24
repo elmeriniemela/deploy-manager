@@ -28,10 +28,11 @@ def create_scheduled_backups():
         resp = api.backup(uid, trigger=trigger)
         _logger.info(resp['fshealth'])
         backups_paths = glob.glob(agentlib.dump_path(uid, trigger, '*.pgc'))
-        backups_paths.sort(reverse=True)
-        for remove in backups_paths[:3]:
+        backups_paths.sort(reverse=True) # reverse=True -> desc -> largest/latest first
+        n = 3 # Remove all except n latest dumps.
+        for remove in backups_paths[n:]:
             _logger.info("Remove %s", remove)
-            # TODO:
+            os.remove(remove)
 
 if __name__ == "__main__":
     create_scheduled_backups()
