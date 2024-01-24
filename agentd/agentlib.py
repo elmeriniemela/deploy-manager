@@ -114,7 +114,7 @@ def save_odoo_config(uid, conf):
 def ensure_backups_mounted():
     if not os.path.ismount('/root/backups'):
         execute(['rclone', 'mount', 'awsbucket:odoobackup1', '/root/backups', '--daemon', '--vfs-cache-mode', 'full'])
-    assert os.path.isfile('/root/backups'), "Not mounted."
+    assert os.path.ismount('/root/backups'), "Not mounted."
 
 def fname_to_ts(fname):
     return datetime.datetime.strptime(fname, '%Y-%m-%dT%H-%M-%S.pgc')
