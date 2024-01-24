@@ -85,20 +85,27 @@ def backup(uid, trigger='manual'):
     _logger.info(f"Starting {trigger} backup for {uid}")
     agentlib.validate(uid=uid)
     fname = agentlib.ts_to_fname(datetime.datetime.utcnow())
-    commands = [
-        [
-            'rclone', 'copy',
-            '--transfers=16',
-            '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
+    agentlib.execute(['pg_dump', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid])
+    agentlib.execute([
+        'rclone', 'copy',
+        '--transfers=16',
+        '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
+        f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
+    ])
+    fsproc = agentlib.execute(
+        cmd=[
+            'rclone', 'check',
+            '--one-way',
             f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
         ],
-        ['pg_dump', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid],
-    ]
-    for cmd in commands:
-        agentlib.execute(cmd)
-
+        check=False,
+    )
     _logger.info(f"Backup done: {trigger} backup for {uid}")
-    return agentlib.list_backups(uid)
+    return {
+        'backups': agentlib.list_backups(uid),
+        'fshealth': (fsproc.stderr or '').strip()
+    }
+
 
 @agentlib.register
 def restore(src_uid, dst_uid, trigger, backup_file):

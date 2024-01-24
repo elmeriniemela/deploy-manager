@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import api
+import agentlib
 import datetime
 import logging
+import glob
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -22,12 +24,14 @@ def create_scheduled_backups():
     insts = api.status()['instances']
     _logger.info(f"Creating scheduled backups for {len(insts)} instances.")
     for instance in insts:
-        api.backup(instance['uid'], trigger=trigger)
-
-def delete_old_backups():
-    pass
+        resp = api.backup(instance['uid'], trigger=trigger)
+        _logger.info(resp['fshealth'])
+        backups_paths = glob.glob(agentlib.dump_path(uid, trigger, '*.pgc'))
+        backups_paths.sort(reverse=True)
+        for remove in backups_paths[:3]:
+            _logger.info("Remove %s", remove)
+            # TODO:
 
 if __name__ == "__main__":
     create_scheduled_backups()
-    delete_old_backups()
 
