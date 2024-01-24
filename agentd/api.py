@@ -86,7 +86,7 @@ def backup(uid, trigger='manual'):
     agentlib.validate(uid=uid)
     fname = agentlib.ts_to_fname(datetime.datetime.utcnow())
     commands = [
-        ['rclone', 'copy', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'storagebox:{uid}/filestore'],
+        ['rclone', 'copy', f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'],
         ['pg_dump', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid],
     ]
     for cmd in commands:
@@ -99,7 +99,7 @@ def backup(uid, trigger='manual'):
 def restore(src_uid, dst_uid, trigger, backup_file):
     agentlib.validate(uid=src_uid)
     agentlib.validate(uid=dst_uid)
-    agentlib.ensure_storagebox()
+    agentlib.ensure_backups_mounted()
     queries = [
         (sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(dst_uid)),),
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(dst_uid)),),
@@ -110,7 +110,7 @@ def restore(src_uid, dst_uid, trigger, backup_file):
             cur.execute(*args)
 
     commands = [
-        ['rclone', 'copy', '--bind', '0.0.0.0', '--ignore-checksum', f'storagebox:{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
+        ['rclone', 'copy', f'awsbucket:odoobackup1/{src_uid}/filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
         ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, agentlib.dump_path(src_uid, trigger, backup_file)],
         ['docker', 'restart', dst_uid],

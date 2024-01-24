@@ -111,11 +111,10 @@ def save_odoo_config(uid, conf):
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
 
-def ensure_storagebox():
-    check = '/root/storagebox/.ssh/authorized_keys'
-    if not os.path.isfile(check):
-        execute(['rclone', 'mount', 'storagebox:', '/root/storagebox', '--daemon', '--vfs-cache-mode', 'full', '--bind', '0.0.0.0', '--ignore-checksum'])
-    assert os.path.isfile(check), check
+def ensure_backups_mounted():
+    if not os.path.ismount('/root/backups'):
+        execute(['rclone', 'mount', 'awsbucket:odoobackup1', '/root/backups', '--daemon', '--vfs-cache-mode', 'full'])
+    assert os.path.isfile('/root/backups'), "Not mounted."
 
 def fname_to_ts(fname):
     return datetime.datetime.strptime(fname, '%Y-%m-%dT%H-%M-%S.pgc')
@@ -124,13 +123,13 @@ def ts_to_fname(ts):
     return f"{ts.strftime('%Y-%m-%dT%H-%M-%S')}.pgc"
 
 def dump_path(uid, trigger, fname, makedirs=False):
-    dirs = f'/root/storagebox/{uid}/{trigger}'
+    dirs = f'/root/backups/{uid}/{trigger}'
     if makedirs:
         os.makedirs(dirs, mode=0o700, exist_ok=True)
     return f'{dirs}/{fname}'
 
 def list_backups(uid):
-    ensure_storagebox()
+    ensure_backups_mounted()
     backups = []
 
     for path in glob.glob(dump_path(uid, '*', '*.pgc')):
