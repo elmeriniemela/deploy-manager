@@ -97,7 +97,9 @@ def backup(uid, trigger='manual'):
         'backups': agentlib.list_backups(uid),
     }
 
+@agentlib.register
 def fshealth(uid):
+    agentlib.validate(uid=uid)
     fsproc = agentlib.execute(
         cmd=[
             'rclone', 'check',
