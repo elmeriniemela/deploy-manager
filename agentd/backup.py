@@ -16,7 +16,10 @@ _logger = logging.getLogger(__name__)
 def create_scheduled_backups():
     today = datetime.date.today()
     if today.day == 1:
-        trigger = 'monthly'
+        if today.month % 3 == 0:
+            trigger = 'quarterly'
+        else:
+            trigger = 'monthly'
     elif today.isoweekday() == 1:
         trigger = 'weekly'
     else:
