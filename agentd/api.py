@@ -92,6 +92,12 @@ def backup(uid, trigger='manual'):
         '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
         f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
     ])
+    _logger.info(f"Backup done: {trigger} backup for {uid}")
+    return {
+        'backups': agentlib.list_backups(uid),
+    }
+
+def fshealth(uid):
     fsproc = agentlib.execute(
         cmd=[
             'rclone', 'check',
@@ -100,11 +106,7 @@ def backup(uid, trigger='manual'):
         ],
         check=False,
     )
-    _logger.info(f"Backup done: {trigger} backup for {uid}")
-    return {
-        'backups': agentlib.list_backups(uid),
-        'fshealth': (fsproc.stderr or '').strip()
-    }
+    return (fsproc.stderr or '').strip()
 
 
 @agentlib.register

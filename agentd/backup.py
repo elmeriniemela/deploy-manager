@@ -29,8 +29,7 @@ def create_scheduled_backups():
     _logger.info(f"Creating scheduled backups for {len(insts)} instances.")
     for instance in insts:
         uid = instance['uid']
-        resp = api.backup(uid, trigger=trigger)
-        _logger.info(resp['fshealth'])
+        api.backup(uid, trigger=trigger)
         backups_paths = glob.glob(agentlib.dump_path(uid, trigger, '*.pgc'))
         backups_paths.sort(reverse=True) # reverse=True -> desc -> largest/latest first
         n = 3 # Remove all except n latest dumps.
