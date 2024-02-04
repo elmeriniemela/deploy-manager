@@ -8,7 +8,7 @@ positions:
 clients:
   - url: https://loki.eniemela.fi:3110/loki/api/v1/push
     tls_config:
-      insecure_skip_verify: false
+      insecure_skip_verify: true
 
 scrape_configs:
 - job_name: system
