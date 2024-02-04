@@ -20,6 +20,9 @@
 
 #### Promtail setup
 * `docker run --name promtail -d -v ./promtail:/etc/promtail -v /var/log:/var/log grafana/promtail:2.9.4 -config.file=/etc/promtail/config.yml`
+* https://grafana.com/docs/loki/latest/send-data/docker-driver/
+* `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
+* `cp promtail/daemon.json /etc/docker/`
 
 
 #### Building the image
