@@ -19,7 +19,14 @@
 * `./install.sh`
 
 #### Promtail setup
-* `docker run --name promtail -d -v ./promtail:/etc/promtail -v /var/log:/var/log grafana/promtail:2.9.4 -config.file=/etc/promtail/config.yml`
+* docker run \
+    -v ./promtail:/etc/promtail \
+    -v /var/log:/var/log \
+    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
+    --restart unless-stopped \
+    --name promtail -d \
+    grafana/promtail:2.9.4 -config.file=/etc/promtail/config.yml
+
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
 * `cp promtail/daemon.json /etc/docker/`
@@ -43,24 +50,15 @@
 * `psql postgres -c "REVOKE CONNECT ON DATABASE kni FROM PUBLIC"`
 * docker run \
     -v /opt/odoo-agent/src:/mnt:ro \
-    -v /etc/odoo/kni:/etc/odoo:ro \
-    -v kni:/var/lib/odoo \
     -v /var/run/postgresql/:/var/run/postgresql/ \
+    -v /etc/odoo/618b4082e2d7:/etc/odoo:ro \
+    -v 618b4082e2d7:/var/lib/odoo \
     -p 127.0.0.1:49152:8069 \
     -p [::1]:49152:8069 \
     -p 127.0.0.1:49153:8072 \
     -p [::1]:49153:8072 \
-    --name kni -t -d odoo-src:16.0
-* docker run \
-    -v /opt/odoo-agent/src:/mnt:ro \
-    -v /etc/odoo/elke:/etc/odoo:ro \
-    -v elke:/var/lib/odoo \
-    -v /var/run/postgresql/:/var/run/postgresql/ \
-    -p 127.0.0.1:49154:8069 \
-    -p [::1]:49154:8069 \
-    -p 127.0.0.1:49155:8072 \
-    -p [::1]:49155:8072 \
-    --name elke -t -d odoo-src:16.0
+    --restart unless-stopped \
+    --name 618b4082e2d7 -t -d odoo-src:16.0
 
 #### Random notes
 * Docker logs
