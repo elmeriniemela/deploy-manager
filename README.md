@@ -18,6 +18,9 @@
 * `git submodule update --init`
 * `./install.sh`
 
+#### Promtail setup
+* `docker run --name promtail -d -v ./promtail:/etc/promtail -v /var/log:/var/log grafana/promtail:2.9.4 -config.file=/etc/promtail/config.yml`
+
 
 #### Building the image
 * `cd docker`
