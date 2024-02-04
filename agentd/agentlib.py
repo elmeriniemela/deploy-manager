@@ -132,7 +132,7 @@ def odoo_docker_run(uid, http_port, gevent_port):
     return [
         'docker', 'run',
         '--log-driver=loki',
-        '--log-opt', 'loki-url="https://loki.eniemela.fi:3110/loki/api/v1/push"',
+        '--log-opt', 'loki-url=https://loki.eniemela.fi:3110/loki/api/v1/push',
         '--log-opt', 'loki-retries=5',
         '--log-opt', 'loki-max-backoff=3s',
         '--log-opt', 'loki-timeout=5s',
