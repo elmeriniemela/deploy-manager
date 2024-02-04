@@ -18,7 +18,6 @@ scrape_configs:
     labels:
       job: 16.0-odoo-varlogs
       __path__: /var/log/*log
-
 - job_name: docker
   pipeline_stages:
     - docker: {}
