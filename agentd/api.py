@@ -21,6 +21,11 @@ def status():
 
     for container in docker_ps_a:
         uid = container['Names'][0].lstrip('/')
+        try:
+            agentlib.validate(uid=uid)
+        except ValueError:
+            continue
+
         instances.append({
             'uid': uid,
             'docker': container,
@@ -212,20 +217,7 @@ def rebuild(uid, http_port, gevent_port):
     agentlib.validate(uid=uid, http_port=http_port, gevent_port=gevent_port)
     commands = [
         ['docker', 'rm', uid],
-        [
-            'docker', 'run',
-            '-v', f'/opt/odoo-agent/src:/mnt:ro',
-            '-v', f'/var/run/postgresql/:/var/run/postgresql/',
-            '-v', f'/etc/odoo/{uid}:/etc/odoo:ro',
-            '-v', f'{uid}:/var/lib/odoo',
-            '-p', f'127.0.0.1:{http_port}:8069',
-            '-p', f'[::1]:{http_port}:8069',
-            '-p', f'127.0.0.1:{gevent_port}:8072',
-            '-p', f'[::1]:{gevent_port}:8072',
-            '--restart', 'unless-stopped',
-            '--name', uid,
-            '-t', '-d', 'odoo-src:16.0',
-        ],
+        agentlib.odoo_docker_run(uid, http_port, gevent_port),
     ]
     for cmd in commands:
         agentlib.execute(cmd)
@@ -292,20 +284,7 @@ def create(uid, hostname, http_port, gevent_port):
             cur.execute(*args)
 
     commands = [
-        [
-            'docker', 'run',
-            '-v', f'/opt/odoo-agent/src:/mnt:ro',
-            '-v', f'/var/run/postgresql/:/var/run/postgresql/',
-            '-v', f'/etc/odoo/{uid}:/etc/odoo:ro',
-            '-v', f'{uid}:/var/lib/odoo',
-            '-p', f'127.0.0.1:{http_port}:8069',
-            '-p', f'[::1]:{http_port}:8069',
-            '-p', f'127.0.0.1:{gevent_port}:8072',
-            '-p', f'[::1]:{gevent_port}:8072',
-            '--restart', 'unless-stopped',
-            '--name', uid,
-            '-t', '-d', 'odoo-src:16.0',
-        ],
+        agentlib.odoo_docker_run(uid, http_port, gevent_port),
         [
             'docker', 'exec', uid, 'odoo',
             '--init=base',

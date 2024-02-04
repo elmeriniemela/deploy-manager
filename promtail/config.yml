@@ -18,12 +18,3 @@ scrape_configs:
     labels:
       job: 16.0-odoo-varlogs
       __path__: /var/log/*log
-- job_name: docker
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: 16.0-odoo-docker
-      __path__: /var/lib/docker/containers/*/*-json.log
-  pipeline_stages:
-    - docker: {}

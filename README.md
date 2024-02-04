@@ -22,14 +22,13 @@
 * docker run \
     -v ./promtail:/etc/promtail \
     -v /var/log:/var/log \
-    -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
     --restart unless-stopped \
     --name promtail -d \
     grafana/promtail:2.9.4 -config.file=/etc/promtail/config.yml
 
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/
+* https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
-* `cp promtail/daemon.json /etc/docker/`
 
 
 #### Building the image
@@ -49,6 +48,14 @@
 * `psql postgres -c "ALTER DATABASE kni OWNER TO kni"`
 * `psql postgres -c "REVOKE CONNECT ON DATABASE kni FROM PUBLIC"`
 * docker run \
+    --log-driver=loki \
+    --log-opt loki-url="https://loki.eniemela.fi:3110/loki/api/v1/push" \
+    --log-opt loki-retries=5 \
+    --log-opt loki-max-backoff=3s \
+    --log-opt loki-timeout=5s \
+    --log-opt loki-tls-insecure-skip-verify=true \
+    --log-opt keep-file=true \
+    --log-opt loki-batch-size=400 \
     -v /opt/odoo-agent/src:/mnt:ro \
     -v /var/run/postgresql/:/var/run/postgresql/ \
     -v /etc/odoo/618b4082e2d7:/etc/odoo:ro \

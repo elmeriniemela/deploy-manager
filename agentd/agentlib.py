@@ -128,6 +128,30 @@ def dump_path(uid, trigger, fname, makedirs=False):
         os.makedirs(dirs, mode=0o700, exist_ok=True)
     return f'{dirs}/{fname}'
 
+def odoo_docker_run(uid, http_port, gevent_port):
+    return [
+        'docker', 'run',
+        '--log-driver=loki',
+        '--log-opt', 'loki-url="https://loki.eniemela.fi:3110/loki/api/v1/push"',
+        '--log-opt', 'loki-retries=5',
+        '--log-opt', 'loki-max-backoff=3s',
+        '--log-opt', 'loki-timeout=5s',
+        '--log-opt', 'loki-tls-insecure-skip-verify=true',
+        '--log-opt', 'keep-file=true',
+        '--log-opt', 'loki-batch-size=400',
+        '-v', f'/opt/odoo-agent/src:/mnt:ro',
+        '-v', f'/var/run/postgresql/:/var/run/postgresql/',
+        '-v', f'/etc/odoo/{uid}:/etc/odoo:ro',
+        '-v', f'{uid}:/var/lib/odoo',
+        '-p', f'127.0.0.1:{http_port}:8069',
+        '-p', f'[::1]:{http_port}:8069',
+        '-p', f'127.0.0.1:{gevent_port}:8072',
+        '-p', f'[::1]:{gevent_port}:8072',
+        '--restart', 'unless-stopped',
+        '--name', uid,
+        '-t', '-d', 'odoo-src:16.0',
+    ]
+
 def list_backups(uid):
     ensure_backups_mounted()
     backups = []
