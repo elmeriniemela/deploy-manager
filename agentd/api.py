@@ -170,7 +170,7 @@ def upgrade(uid):
         joined_upgrade = ','.join(upgrade)
         with agentlib.psql() as cur:
             cur.execute(
-                sql.SQL("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = {uid} AND usename = {uid}").format(uid=sql.Identifier(uid))
+                sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND usename = %s"), (uid, uid),
             )
 
         proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
