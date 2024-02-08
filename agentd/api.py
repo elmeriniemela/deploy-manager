@@ -172,6 +172,8 @@ def upgrade(uid):
             cur.execute(
                 sql.SQL("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = {uid} AND usename = {uid}").format(uid=sql.Identifier(uid))
             )
+
+        proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
         return (proc.stderr or '').strip() or (proc.stdout or '').strip()
     return None
 
