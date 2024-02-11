@@ -144,7 +144,7 @@ def restore(src_uid, dst_uid, trigger, backup_file):
         agentlib.execute(cmd)
 
 @agentlib.register
-def upgrade(uid):
+def upgrade(uid, kill_queries):
     agentlib.validate(uid=uid)
     codever = {}
     for fname in glob.glob('src/**/**/__manifest__.py'):
@@ -168,10 +168,11 @@ def upgrade(uid):
 
     if upgrade:
         joined_upgrade = ','.join(upgrade)
-        with agentlib.psql() as cur:
-            cur.execute(
-                sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND usename = %s"), (uid, uid),
-            )
+        if kill_queries:
+            with agentlib.psql() as cur:
+                cur.execute(
+                    sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND usename = %s"), (uid, uid),
+                )
 
         proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
         return (proc.stderr or '').strip() or (proc.stdout or '').strip()
