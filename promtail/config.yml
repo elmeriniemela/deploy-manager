@@ -17,4 +17,4 @@ scrape_configs:
       - localhost
     labels:
       job: 16.0-odoo-varlogs
-      __path__: /var/log/*log
+      __path__: /var/log/**/*log
