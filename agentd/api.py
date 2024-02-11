@@ -5,6 +5,8 @@ import agentlib
 import requests
 import os
 import glob
+import time
+import threading
 import ast
 import datetime
 import tempfile
@@ -144,7 +146,7 @@ def restore(src_uid, dst_uid, trigger, backup_file):
         agentlib.execute(cmd)
 
 @agentlib.register
-def upgrade(uid, kill_queries):
+def upgrade(uid):
     agentlib.validate(uid=uid)
     codever = {}
     for fname in glob.glob('src/**/**/__manifest__.py'):
@@ -168,15 +170,46 @@ def upgrade(uid, kill_queries):
 
     if upgrade:
         joined_upgrade = ','.join(upgrade)
-        if kill_queries:
-            with agentlib.psql() as cur:
-                cur.execute(
-                    sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND usename = %s"), (uid, uid),
-                )
+        with agentlib.psql() as cur:
+            cur.execute(
+                sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND usename = %s"), (uid, uid),
+            )
 
         proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
         return (proc.stderr or '').strip() or (proc.stdout or '').strip()
     return None
+
+
+@agentlib.register
+def self_upgrade(uid, callback_url):
+    agentlib.validate(uid=uid)
+
+    def thread_worker():
+        time.sleep(1)
+        logs = upgrade(uid) or ''
+        resp = requests.post(
+            url=callback_url,
+            json={
+                'method': 'upgrade',
+                'uid': uid,
+                'logs': logs,
+            }
+        )
+        _logger.info(resp.text)
+
+        restart(uid)
+        resp = requests.post(
+            url=callback_url,
+            json={
+                'method': 'restart',
+                'uid': uid,
+            },
+        )
+        _logger.info(resp.text)
+
+
+    threading.Thread(target=thread_worker).start()
+
 
 
 @agentlib.register
