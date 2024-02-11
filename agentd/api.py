@@ -28,6 +28,9 @@ def status():
         except ValueError:
             continue
 
+        cid = container['Id']
+        docker['inspect'] = requests.get(url=f'http://127.0.0.1:2375/containers/{cid}/json').json()
+
         instances.append({
             'uid': uid,
             'docker': container,
