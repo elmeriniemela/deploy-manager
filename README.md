@@ -31,9 +31,17 @@
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
 
 
+#### Creating a personal github access token:
+* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+
+
 #### Building the image
 * `cd docker`
 * `docker build -t odoo-src:16.0 /opt/odoo-agent`
+* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
+
+#### Pulling the image
+* `docker pull ghcr.io/elmeriniemela/odoo-src:16.0`
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`
@@ -43,10 +51,10 @@
 * https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
 
 #### New DB
-* `createdb kni`
-* `psql postgres -c "CREATE USER kni WITH ENCRYPTED PASSWORD 'kni'"`
-* `psql postgres -c "ALTER DATABASE kni OWNER TO kni"`
-* `psql postgres -c "REVOKE CONNECT ON DATABASE kni FROM PUBLIC"`
+* `createdb 618b4082e2d7`
+* `psql postgres -c "CREATE USER 618b4082e2d7 WITH ENCRYPTED PASSWORD '618b4082e2d7'"`
+* `psql postgres -c "ALTER DATABASE 618b4082e2d7 OWNER TO 618b4082e2d7"`
+* `psql postgres -c "REVOKE CONNECT ON DATABASE 618b4082e2d7 FROM PUBLIC"`
 * docker run \
     --log-driver=loki \
     --log-opt loki-url="https://loki.eniemela.fi:3110/loki/api/v1/push" \
@@ -65,7 +73,21 @@
     -p 127.0.0.1:49153:8072 \
     -p [::1]:49153:8072 \
     --restart unless-stopped \
-    --name 618b4082e2d7 -t -d odoo-src:16.0
+    --name 618b4082e2d7 -t -d ghcr.io/elmeriniemela/odoo-src:16.0
+
+
+### Local setup
+* docker run \
+    -v ./src:/mnt:ro \
+    -v /var/run/postgresql/:/var/run/postgresql/ \
+    -v /etc/odoo/docker16:/etc/odoo:ro \
+    -v docker16:/var/lib/odoo \
+    -p 127.0.0.1:49152:8069 \
+    -p [::1]:49152:8069 \
+    -p 127.0.0.1:49153:8072 \
+    -p [::1]:49153:8072 \
+    --restart unless-stopped \
+    --name docker16 -t -d ghcr.io/elmeriniemela/odoo-src:16.0
 
 #### Random notes
 * Docker logs
