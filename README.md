@@ -37,7 +37,7 @@
 
 #### Building the image
 * `cd docker`
-* `docker build -t odoo-src:16.0 /opt/odoo-agent`
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:16.0 /opt/odoo-agent`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
 
 #### Pulling the image
