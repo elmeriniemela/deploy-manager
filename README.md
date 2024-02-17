@@ -11,9 +11,15 @@
     * https://github.com/OCA/interface-github
 * XML-RPC agent for running remote commands
 * Monitoring system with logs (Zabbix or something else?)
+    * grafana loki: DONE!
+    * zabbix
+
+#### Creating a personal github access token (READ only):
+* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
 
 #### Installation
-* `git clone -b 16.0 git@github.com:elmeriniemela/odoo-agent.git /opt/odoo-agent`
+* `git config --global credential.helper store`
+* `git clone -b 16.0 https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
 * `git submodule update --init`
 * `./install.sh`
@@ -29,10 +35,6 @@
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
-
-
-#### Creating a personal github access token:
-* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
 
 
 #### Building the image
