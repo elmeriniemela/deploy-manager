@@ -3,7 +3,7 @@
 #### TODO:
 * Custom docker image with odoo source install + custom pip packages.
     * https://github.com/odoo/odoo/blob/16.0/debian/control
-    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry DONE!
 * CI pipeline with Github actions / Jenkinks
     * https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
     * https://github.com/OCA/oca-ci
