@@ -20,7 +20,7 @@ apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-co
 curl https://rclone.org/install.sh | sudo bash
 
 python3 -m venv /root/agent-venv
-/root/agent-venv/bin/python -m pip install requirements.txt
+/root/agent-venv/bin/python -m pip install -r requirements.txt
 
 cp systemd/system/odoo-agent.service /etc/systemd/system/
 systemctl daemon-reload
