@@ -26,7 +26,7 @@ cp systemd/system/odoo-agent.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable odoo-agent.service --now
 
-rsync -avz postgres/ /etc/postgresql/*/main/
-rsync -avz nginx/ /etc/nginx/
+rsync -avz postgres/ /etc/postgresql/*/main
+rsync -avz nginx/ /etc/nginx
 
 exit 1
