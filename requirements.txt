@@ -2,3 +2,4 @@ psycopg2-binary
 certbot
 certbot-nginx
 certbot-dns-cloudflare
+jinja2
