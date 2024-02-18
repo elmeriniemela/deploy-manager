@@ -336,8 +336,11 @@ def create(uid, hostname, http_port, gevent_port):
         for args in queries:
             cur.execute(*args)
 
+    agentlib.execute(agentlib.odoo_docker_run(uid, http_port, gevent_port))
+    wait = 2
+    _logger.info(f"Leave {wait}s time for base_registry_signaling to be created.")
+    time.sleep(wait)
     commands = [
-        agentlib.odoo_docker_run(uid, http_port, gevent_port),
         [
             'docker', 'exec', uid, 'odoo',
             '--init=base',
