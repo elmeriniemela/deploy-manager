@@ -192,6 +192,19 @@ def ssl_cert(hostname):
 
 
 @agentlib.register
+def ssl_wildcard():
+    # https://www.bjornjohansen.com/wildcard-certificate-letsencrypt-cloudflare
+    agentlib.execute([
+        'certbot', 'certonly', '--dns-cloudflare',
+        '--dns-cloudflare-credentials', '/root/cloudflare.ini',
+        '-d', '*.eniemela.fi',
+        '--preferred-challenges', 'dns-01',
+        '-n', '--agree-tos',
+        '-m=niemela.elmeri@gmail.com',
+        '--dns-cloudflare-propagation-seconds=120', '-vvv',
+    ])
+
+@agentlib.register
 def self_upgrade(uid, callback_url):
     agentlib.validate(uid=uid)
 
@@ -317,6 +330,7 @@ def create(uid, hostname, http_port, gevent_port):
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
+        (sql.SQL("GRANT ALL ON SCHEMA public TO {uid} WITH GRANT OPTION").format(uid=sql.Identifier(uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
     with agentlib.psql() as cur:
