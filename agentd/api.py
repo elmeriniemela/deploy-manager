@@ -263,7 +263,8 @@ def remove(uid, hostname):
         if uid in existing_users:
             cur.execute(sql.SQL("DROP USER {uid}").format(uid=sql.Identifier(uid)),)
 
-    agentlib.execute(['docker', 'volume', 'rm', uid])
+    if os.path.isdir(f'/var/lib/docker/volumes/{uid}'):
+        agentlib.execute(['docker', 'volume', 'rm', uid])
 
 @agentlib.register
 def rebuild(uid, http_port, gevent_port):
