@@ -330,7 +330,6 @@ def create(uid, hostname, http_port, gevent_port):
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),
         (sql.SQL("CREATE DATABASE {uid} WITH OWNER={uid}").format(uid=sql.Identifier(uid)),),
-        (sql.SQL("GRANT ALL ON SCHEMA public TO {uid} WITH GRANT OPTION").format(uid=sql.Identifier(uid)),),
         (sql.SQL("REVOKE ALL ON DATABASE {uid} FROM public").format(uid=sql.Identifier(uid)),),
     ]
     with agentlib.psql() as cur:
