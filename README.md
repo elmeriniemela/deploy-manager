@@ -3,7 +3,7 @@
 #### TODO:
 * Custom docker image with odoo source install + custom pip packages.
     * https://github.com/odoo/odoo/blob/16.0/debian/control
-    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry DONE!
+    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 * CI pipeline with Github actions / Jenkinks
     * https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
     * https://github.com/OCA/oca-ci
@@ -16,13 +16,20 @@
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+* `docker login ghcr.io -u elmeriniemela`
 
 #### Installation
 * `git config --global credential.helper store`
-* `git clone -b 16.0 https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
+* `git clone -b 16.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
 * `git submodule update --init`
 * `./install.sh`
+* `systemctl edit docker.service`
+```
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/containerd/containerd.sock
+```
 
 #### Promtail setup
 * docker run \
@@ -37,18 +44,15 @@
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
 
 
-#### Building the image
-* `cd docker`
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:16.0 /opt/odoo-agent`
-* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
-
 #### Pulling the image
 * `docker pull ghcr.io/elmeriniemela/odoo-src:16.0`
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`
-* `psql postgres -c "REVOKE CONNECT ON DATABASE template1 FROM PUBLIC"`
-* `psql postgres -c "REVOKE CONNECT ON DATABASE postgres FROM PUBLIC"`
+* psql template1 -f - << EOT
+REVOKE ALL ON DATABASE template1 FROM public;
+GRANT ALL ON SCHEMA public TO public;
+GRANT ALL ON SCHEMA public TO postgres;
 * https://wiki.postgresql.org/wiki/Shared_Database_Hosting
 * https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
 
@@ -90,6 +94,12 @@
     -p [::1]:49153:8072 \
     --restart unless-stopped \
     --name docker16 -t -d ghcr.io/elmeriniemela/odoo-src:16.0
+
+#### Building the image
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:16.0 /opt/odoo-agent`
+* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
+* `sudo docker push ghcr.io/elmeriniemela/odoo-src:16.0`
+
 
 #### Random notes
 * Docker logs

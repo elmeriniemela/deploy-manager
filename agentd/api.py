@@ -95,7 +95,7 @@ def backup(uid, trigger='manual'):
     _logger.info(f"Starting {trigger} backup for {uid}")
     agentlib.validate(uid=uid)
     fname = agentlib.ts_to_fname(datetime.datetime.utcnow())
-    agentlib.execute(['pg_dump', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid])
+    agentlib.execute(['pg_dump', '--no-owner', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid])
     agentlib.execute([
         'rclone', 'copy',
         '--transfers=16',
@@ -181,6 +181,14 @@ def upgrade(uid):
         proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
         return (proc.stderr or '').strip() or (proc.stdout or '').strip()
     return None
+
+
+@agentlib.register
+def ssl_cert(hostname):
+    agentlib.validate(hostname=hostname)
+    basecmd = ['certbot', 'certonly', '-n', '--expand', '--agree-tos', '-m=niemela.elmeri@gmail.com', f'-d={hostname}', '--standalone',]
+    agentlib.execute(basecmd + ['--dry-run'])
+    agentlib.execute(basecmd)
 
 
 @agentlib.register
@@ -333,3 +341,18 @@ def create(uid, hostname, http_port, gevent_port):
         cur.execute(sql.SQL("UPDATE res_users SET password=%s WHERE login='admin'"), (uid,)) # Better than admin:admin, but desinged to be changed manually.
 
     return config
+
+if __name__ == "__main__":
+    functions = {}
+    localdict = dict(locals())
+    for name, obj in localdict.items():
+        if getattr(obj, '_rpc', None):
+            functions[name] = obj
+
+    import argparse
+    parser = argparse.ArgumentParser(description='API')
+    parser.add_argument('function', help="API function to run.")
+    parser.add_argument('args', metavar='arg', type=str, nargs='*', help='arguments for the function')
+    args = parser.parse_args()
+    func = functions[args.function]
+    func(*args.args)
