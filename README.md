@@ -23,7 +23,7 @@
 * `git clone -b 16.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
 * `git submodule update --init`
-* `./install.sh`
+* `./ubuntu-install.sh`
 * `systemctl edit docker.service`
 ```
 [Service]
