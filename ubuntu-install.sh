@@ -3,8 +3,7 @@
 set -e
 
 apt update
-apt install postgresql nginx ca-certificates curl gnupg vim tmux
-apt install certbot python3-certbot-nginx
+apt install postgresql nginx ca-certificates curl gnupg vim tmux patchutils fuse3 python3-pip
 
 systemctl enable nginx --now
 systemctl enable postgresql --now
@@ -19,6 +18,9 @@ apt update
 apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 curl https://rclone.org/install.sh | sudo bash
+
+python3 -m venv /root/agent-venv
+/root/agent-venv/bin/python -m pip install requirements.txt
 
 cp systemd/system/odoo-agent.service /etc/systemd/system/
 systemctl daemon-reload
