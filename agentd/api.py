@@ -205,6 +205,12 @@ def ssl_wildcard():
     ])
 
 @agentlib.register
+def ssl_renew():
+    proc = agentlib.execute(['certbot', 'renew'])
+    agentlib.execute(['systemctl', 'reload', 'nginx'])
+    return '\n'.join([proc.stderr or '', proc.stdout or '']).strip()
+
+@agentlib.register
 def self_upgrade(uid, callback_url):
     agentlib.validate(uid=uid)
 
