@@ -186,7 +186,7 @@ def upgrade(uid):
 @agentlib.register
 def ssl_cert(hostname):
     agentlib.validate(hostname=hostname)
-    basecmd = ['python', '-m', 'certbot', 'certonly', '-n', '--expand', '--agree-tos', '-m=niemela.elmeri@gmail.com', f'-d={hostname}', '--standalone',]
+    basecmd = ['certbot', 'certonly', '-n', '--expand', '--agree-tos', '-m=niemela.elmeri@gmail.com', f'-d={hostname}', '--standalone',]
     agentlib.execute(basecmd + ['--dry-run'])
     agentlib.execute(basecmd)
 
@@ -195,7 +195,7 @@ def ssl_cert(hostname):
 def ssl_wildcard():
     # https://www.bjornjohansen.com/wildcard-certificate-letsencrypt-cloudflare
     agentlib.execute([
-        'python', '-m', 'certbot', 'certonly', '--dns-cloudflare',
+        'certbot', 'certonly', '--dns-cloudflare',
         '--dns-cloudflare-credentials', '/root/cloudflare.ini',
         '-d', '*.eniemela.fi',
         '--preferred-challenges', 'dns-01',
@@ -206,7 +206,7 @@ def ssl_wildcard():
 
 @agentlib.register
 def ssl_renew():
-    proc = agentlib.execute(['python', '-m', 'certbot', 'renew'])
+    proc = agentlib.execute(['certbot', 'renew'])
     agentlib.execute(['systemctl', 'reload', 'nginx'])
     return '\n'.join([proc.stderr or '', proc.stdout or '']).strip()
 
