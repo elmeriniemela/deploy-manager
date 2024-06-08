@@ -9,6 +9,8 @@
     * https://github.com/OCA/oca-ci
     * https://github.com/OCA/oca-github-bot
     * https://github.com/OCA/interface-github
+    * https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo16.0
+
 * XML-RPC agent for running remote commands
 * Monitoring system with logs (Zabbix or something else?)
     * grafana loki: DONE!

@@ -69,7 +69,6 @@ RUN apt-get update && \
         gsfonts \
         libjs-underscore \
         lsb-base \
-        postgresql-client \
         python3-babel \
         python3-chardet \
         python3-dateutil \
@@ -82,7 +81,6 @@ RUN apt-get update && \
         python3-libsass \
         python3-lxml \
         python3-xmlsec \
-        python3-num2words \
         python3-ofxparse \
         python3-passlib \
         python3-polib \
@@ -92,16 +90,12 @@ RUN apt-get update && \
         python3-openssl \
         python3-pypdf2 \
         python3-rjsmin \
-        python3-qrcode \
-        python3-renderpm \
         python3-reportlab \
         python3-requests \
         python3-stdnum \
         python3-tz \
-        python3-vobject \
         python3-werkzeug \
         python3-xlsxwriter \
-        python3-xlrd \
         python3-zeep \
         xz-utils && \
     if [ -z "${TARGETARCH}" ]; then \
