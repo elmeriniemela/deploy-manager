@@ -12,9 +12,9 @@
 
 * XML-RPC agent for running remote commands
 * Monitoring prometheus
-    * https://github.com/elmeriniemela/grafana-loki
+    * [grafana loki: DONE!](https://github.com/elmeriniemela/grafana-loki)
     * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
-    * prometheus?
+    *
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
