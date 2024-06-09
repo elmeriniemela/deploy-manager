@@ -11,9 +11,9 @@
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 
 * XML-RPC agent for running remote commands
-* Monitoring system with logs (Zabbix or prometheus?)
-    * grafana loki: DONE!
-    * zabbix?
+* Monitoring prometheus
+    * https://github.com/elmeriniemela/grafana-loki
+    * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
     * prometheus?
 
 #### Creating a personal github access token (READ only):
@@ -45,15 +45,14 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
 
-#### Prometheus setup:
-* docker volume create prometheus-data
-* docker run \
-    -p 9090:9090 \
-    -v ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
-    -v prometheus-data:/prometheus \
+#### Prometheus note exporter monitoring:
+* docker run -d \
+    --net="host" \
+    --pid="host" \
+    -v "/:/host:ro,rslave" \
     --restart unless-stopped \
-    --name prometheus -d \
-    prom/prometheus
+    quay.io/prometheus/node-exporter:latest \
+    --path.rootfs=/host
 
 
 #### Pulling the image
