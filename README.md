@@ -1,20 +1,20 @@
 ### Odoo Docker
 
-#### TODO:
+#### Architecture:
 * Custom docker image with odoo source install + custom pip packages.
     * https://github.com/odoo/odoo/blob/16.0/debian/control
     * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
-* CI pipeline with Github actions / Jenkinks
-    * https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
-    * https://github.com/OCA/oca-ci
-    * https://github.com/OCA/oca-github-bot
-    * https://github.com/OCA/interface-github
-    * https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo16.0
+* CI pipeline with Github actions:
+    * Actions defined here at `src/extra-addons/.github/workflows/test.yml`
+    * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
+    * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo16.0
+    * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 
 * XML-RPC agent for running remote commands
-* Monitoring system with logs (Zabbix or something else?)
+* Monitoring system with logs (Zabbix or prometheus?)
     * grafana loki: DONE!
-    * zabbix
+    * zabbix?
+    * prometheus?
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
@@ -44,6 +44,16 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
 * `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
+
+#### Prometheus setup:
+* docker volume create prometheus-data
+* docker run \
+    -p 9090:9090 \
+    -v ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
+    -v prometheus-data:/prometheus \
+    --restart unless-stopped \
+    --name prometheus -d \
+    prom/prometheus
 
 
 #### Pulling the image
