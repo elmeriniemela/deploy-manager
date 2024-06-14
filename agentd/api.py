@@ -344,8 +344,9 @@ def create(uid, hostname, http_port, gevent_port):
             cur.execute(*args)
 
     agentlib.execute(agentlib.odoo_docker_run(uid, http_port, gevent_port))
-    _logger.info(f"Check that Odoo is ready (base_registry_signaling is created).")
-    agentlib.execute(['docker', 'exec', uid, 'curl', '-L', 'localhost:8069'])
+    _logger.info(f"Wait for Odoo to be ready (base_registry_signaling is created).")
+    time.sleep(3)
+    # agentlib.execute(['docker', 'exec', uid, 'curl', '-L', 'localhost:8069'])
     commands = [
         [
             'docker', 'exec', uid, 'odoo',
