@@ -11,3 +11,6 @@ tinyrpc
 pyxirr
 numpy-financial
 genshi
+signxml
+py3o.formats
+py3o.template
