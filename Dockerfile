@@ -114,8 +114,8 @@ RUN apt-get update && \
 
 # Install rtlcss (on Debian buster)
 RUN npm install -g rtlcss
-COPY src/extra-addons/requirements.txt /requirements.txt
-RUN pip3 install -r /requirements.txt
+COPY src/requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
 
 RUN useradd -ms /bin/bash odoo
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt for users addons
