@@ -14,3 +14,5 @@ genshi
 signxml
 py3o.formats
 py3o.template
+platformdirs
+pypdf

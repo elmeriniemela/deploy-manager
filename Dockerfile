@@ -22,6 +22,7 @@ RUN apt-get update && \
         ca-certificates \
         curl \
         dirmngr \
+        libreoffice \
         fonts-noto-cjk \
         gnupg \
         locales \
