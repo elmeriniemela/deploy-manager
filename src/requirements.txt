@@ -16,3 +16,6 @@ py3o.formats
 py3o.template
 platformdirs
 pypdf
+jwcrypto
+oauthlib
+requests_oauthlib
