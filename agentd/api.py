@@ -43,6 +43,23 @@ def status():
         cur.execute("select * from pg_catalog.pg_user")
         pg_users = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
 
+    modules = []
+    for fname in glob.glob('src/**/.git'):
+        dirname = os.path.dirname(fname)
+        mod = {
+            'name': os.path.basename(dirname),
+            'directory': dirname,
+        }
+        try:
+            mod['commit'] = agentlib.execute(f'cd {dirname} && git rev-parse HEAD', shell=True).stdout.strip()
+            mod['branch'] = agentlib.execute(f'cd {dirname} && git rev-parse --abbrev-ref HEAD', shell=True).stdout.strip()
+            mod['url'] = agentlib.execute(f'cd {dirname} && git remote get-url origin', shell=True).stdout.strip()
+        except Exception as error:
+            _logger.exception(error)
+            continue
+
+        modules.append(mod)
+
 
     status = {
         'instances': instances,
@@ -50,7 +67,8 @@ def status():
         'pg_databases': pg_databases,
         'agent': {
             'commit': agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout.strip(),
-        }
+        },
+        'modules': modules,
     }
     return status
 
@@ -373,9 +391,10 @@ if __name__ == "__main__":
             functions[name] = obj
 
     import argparse
+    from pprint import pprint
     parser = argparse.ArgumentParser(description='API')
     parser.add_argument('function', help="API function to run.")
     parser.add_argument('args', metavar='arg', type=str, nargs='*', help='arguments for the function')
     args = parser.parse_args()
     func = functions[args.function]
-    func(*args.args)
+    pprint(func(*args.args))
