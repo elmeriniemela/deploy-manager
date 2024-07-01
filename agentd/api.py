@@ -48,7 +48,6 @@ def status():
         dirname = os.path.dirname(fname)
         mod = {
             'name': os.path.basename(dirname),
-            'directory': dirname,
         }
         try:
             mod['commit'] = agentlib.execute(f'cd {dirname} && git rev-parse HEAD', shell=True).stdout.strip()
@@ -338,11 +337,11 @@ def reset(uid):
 
 
 @agentlib.register
-def create(uid, hostname, http_port, gevent_port):
-    agentlib.validate(uid=uid, hostname=hostname, http_port=http_port, gevent_port=gevent_port)
+def create(uid, hostname, http_port, gevent_port, modules):
+    agentlib.validate(uid=uid, hostname=hostname, http_port=http_port, gevent_port=gevent_port, modules=modules)
     pw = secrets.token_hex(32)
 
-    config = agentlib.render_odoo_config(uid, pw)
+    config = agentlib.render_odoo_config(uid, pw, modules)
 
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)

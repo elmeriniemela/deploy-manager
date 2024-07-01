@@ -5,7 +5,7 @@
     * https://github.com/odoo/odoo/blob/16.0/debian/control
     * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 * CI pipeline with Github actions:
-    * Actions defined here at `src/extra-addons/.github/workflows/test.yml`
+    * Actions defined here at `src/odoo_addons/.github/workflows/test.yml`
     * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
     * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo16.0
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions

@@ -205,6 +205,7 @@ def validate(**kwargs):
         'uid': is_valid_uid,
         'http_port': is_valid_port,
         'gevent_port': is_valid_port,
+        'modules': is_valid_modules
     }
     missing = set(kwargs.keys()) - set(validators.keys())
     if missing:
@@ -213,6 +214,12 @@ def validate(**kwargs):
     for key, value in kwargs.items():
         resp = validators[key](value)
         assert resp, "Validator for '%s' returned '%s'" % (key, resp)
+
+def is_valid_modules(modules):
+    assert isinstance(modules, list), f"Modules should be a list not {type(modules)}"
+    for mod in modules:
+        assert isinstance(mod, str), f"Module should be a string not {type(mod)}"
+        assert os.path.isdir(f'src/{mod}'), f"Module directory does not exist"
 
 
 def is_valid_port(port):
