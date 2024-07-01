@@ -85,12 +85,7 @@ def agent_pull(checkout):
 
 @agentlib.register
 def agent_diff(version_range, include=None, exclude=None):
-    commands = [
-        ['git', 'fetch'],
-    ]
-    for cmd in commands:
-        agentlib.execute(cmd)
-
+    agentlib.execute(['git', 'fetch'])
     output = agentlib.execute(['git', 'diff', '--submodule=diff', version_range]).stdout
 
     exclude = exclude or ['*.po', '*.pot', '**/tests/*']
@@ -106,6 +101,34 @@ def agent_diff(version_range, include=None, exclude=None):
 
     return output
 
+@agentlib.register
+def module_diff(module, version_range, include=None, exclude=None):
+    agentlib.execute(['git', 'fetch'], cwd=f'src/{module}')
+    output = agentlib.execute(['git', 'diff', '--submodule=diff', version_range], cwd=f'src/{module}').stdout
+    exclude = exclude or ['*.po', '*.pot', '**/tests/*']
+    if include or exclude:
+        filter_cmd = ['filterdiff']
+        for p in (include or []): filter_cmd.extend(['-i', p])
+        for p in (exclude or []): filter_cmd.extend(['-x', p])
+
+        with tempfile.TemporaryFile(mode='w') as fp:
+            fp.write(output)
+            fp.seek(0)
+            output = agentlib.execute(filter_cmd, stdin=fp).stdout
+
+    return output
+
+@agentlib.register
+def module_pull(module, checkout):
+    commands = [
+        ['git', 'pull'],
+        ['git', 'checkout', checkout],
+        ['git', 'submodule', 'update', '--init'],
+    ]
+    for cmd in commands:
+        agentlib.execute(cmd, cwd=f'src/{module}')
+
+    return agentlib.execute(['git', 'rev-parse', 'HEAD'], cwd=f'src/{module}').stdout.strip()
 
 @agentlib.register
 def backup(uid, trigger='manual'):
