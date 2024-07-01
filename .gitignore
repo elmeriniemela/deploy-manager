@@ -1,3 +1,5 @@
 .psql_history
 .bash_history
 *.pyc
+src/
+!src/requirements.txt
