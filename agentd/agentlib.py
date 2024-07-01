@@ -98,11 +98,16 @@ def store_nginx_map(fname, match, target, mapping):
         fp.write(conf)
 
 
-def render_odoo_config(uid, pw):
+def render_odoo_config(uid, pw, modules):
     with open('templates/odoo.conf') as fp:
         template = Template(fp.read(), keep_trailing_newline=True)
 
-    conf = template.render(uid=uid, pw=pw)
+    try:
+        modules.remove('odoo')
+    except ValueError:
+        pass
+
+    conf = template.render(uid=uid, pw=pw, modules=modules)
     save_odoo_config(uid, conf)
     return conf
 
