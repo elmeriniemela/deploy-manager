@@ -1,4 +1,0 @@
-[submodule "src/muk_web"]
-	path = src/muk_web
-	url = https://github.com/muk-it/muk_web.git
-	branch = 16.0
