@@ -10,11 +10,11 @@
 	path = src/enterprise
 	url = https://github.com/elmeriniemela/enterprise.git
 	branch = 17.0
-[submodule "extra-addons"]
-	path = src/extra-addons
-	url = https://github.com/elmeriniemela/odoo_addons.git
-	branch = 17.0
 [submodule "src/muk_web"]
 	path = src/muk_web
 	url = https://github.com/muk-it/muk_web.git
+	branch = 16.0
+[submodule "src/odoo_addons"]
+	path = src/odoo_addons
+	url = git@github.com:elmeriniemela/odoo_addons.git
 	branch = 16.0
