@@ -1,15 +1,3 @@
-[submodule "odoo"]
-	path = src/odoo
-	url = https://github.com/odoo/odoo.git
-	branch = 16.0
-[submodule "design-themes"]
-	path = src/design-themes
-	url = https://github.com/odoo/design-themes.git
-	branch = 16.0
-[submodule "enterprise"]
-	path = src/enterprise
-	url = https://github.com/elmeriniemela/enterprise.git
-	branch = 16.0
 [submodule "src/muk_web"]
 	path = src/muk_web
 	url = https://github.com/muk-it/muk_web.git
