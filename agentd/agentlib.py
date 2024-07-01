@@ -220,6 +220,7 @@ def is_valid_modules(modules):
     for mod in modules:
         assert isinstance(mod, str), f"Module should be a string not {type(mod)}"
         assert os.path.isdir(f'src/{mod}'), f"Module directory does not exist"
+    return True
 
 
 def is_valid_port(port):
