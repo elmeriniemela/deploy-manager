@@ -297,11 +297,7 @@ def remove(uid, http_port, gevent_port):
     if uid in existing_containers:
         agentlib.execute(['docker', 'rm', uid])
 
-    sync_urls(
-        hostnames=[],
-        http_port=http_port,
-        gevent_port=gevent_port,
-    )
+    sync_urls(hostnames=[], http_port=http_port, gevent_port=gevent_port)
 
     existing_dbs = {v['datname'] for v in curstatus['pg_databases']}
     existing_users = {v['usename'] for v in curstatus['pg_users']}
@@ -332,8 +328,8 @@ def config(uid, conf):
 
 
 @agentlib.register
-def sync_urls(uid, hostnames, http_port, gevent_port):
-    agentlib.validate(uid=uid, hostnames=hostnames)
+def sync_urls(hostnames, http_port, gevent_port):
+    agentlib.validate(hostnames=hostnames, http_port=http_port, gevent_port=gevent_port)
 
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
