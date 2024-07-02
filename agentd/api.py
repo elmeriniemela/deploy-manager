@@ -336,7 +336,7 @@ def sync_urls(uid, hostnames, http_port, gevent_port):
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
         # Remove old ones
-        mapping = {d: p for d, p in mapping.items() if int(p) != int(port)}
+        mapping = {d: p for d, p in mapping.items() if int(p.split(':')[-1]) != int(port)}
         # Add new ones
         for hostname in hostnames:
             agentlib.validate(hostname=hostname)
