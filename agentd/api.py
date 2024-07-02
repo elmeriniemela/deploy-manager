@@ -333,17 +333,11 @@ def config(uid, conf):
 def sync_urls(uid, hostnames, http_port, gevent_port):
     agentlib.validate(uid=uid)
 
-    # Remove old ones
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
-        for d, p in mapping.items():
-            if int(p) == int(port):
-                del mapping[d]
-        agentlib.store_nginx_map(fname, match, target, mapping)
-
-    # Add new ones
-    for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
-        match, target, mapping = agentlib.load_nginx_map(fname)
+        # Remove old ones
+        mapping = {d: p for d, p in mapping.items() if int(p) != int(port)}
+        # Add new ones
         for hostname in hostnames:
             agentlib.validate(hostname=hostname)
             mapping[hostname] = f'127.0.0.1:{port}'
