@@ -330,6 +330,30 @@ def config(uid, conf):
 
 
 @agentlib.register
+def sync_urls(uid, hostnames, http_port, gevent_port):
+    agentlib.validate(uid=uid)
+
+    # Remove old ones
+    for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
+        match, target, mapping = agentlib.load_nginx_map(fname)
+        for d, p in mapping.items():
+            if int(p) == int(port):
+                del mapping[d]
+        agentlib.store_nginx_map(fname, match, target, mapping)
+
+    # Add new ones
+    for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
+        match, target, mapping = agentlib.load_nginx_map(fname)
+        for hostname in hostnames:
+            agentlib.validate(hostname=hostname)
+            mapping[hostname] = f'127.0.0.1:{port}'
+
+        agentlib.store_nginx_map(fname, match, target, mapping)
+
+    agentlib.execute(['systemctl', 'reload', 'nginx'])
+
+
+@agentlib.register
 def reset(uid):
     agentlib.validate(uid=uid)
     queries = [
