@@ -329,7 +329,7 @@ def config(uid, conf):
 
 @agentlib.register
 def sync_urls(hostnames, http_port, gevent_port):
-    agentlib.validate(hostnames=hostnames, http_port=http_port, gevent_port=gevent_port)
+    agentlib.validate(hostnames=hostnames) # ports are not checked, as the instance may be running and ports binded.
 
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
