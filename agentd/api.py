@@ -225,7 +225,7 @@ def upgrade(uid):
 
 @agentlib.register
 def ssl_cert(hostname):
-    agentlib.validate(hostname=hostname)
+    agentlib.validate(hostnames=[hostname])
     basecmd = ['certbot', 'certonly', '-n', '--expand', '--agree-tos', '-m=niemela.elmeri@gmail.com', f'-d={hostname}', '--standalone',]
     agentlib.execute(basecmd + ['--dry-run'])
     agentlib.execute(basecmd)
@@ -290,18 +290,18 @@ def stop(uid):
     agentlib.execute(['docker', 'stop', uid])
 
 @agentlib.register
-def remove(uid, hostname):
-    agentlib.validate(uid=uid, hostname=hostname)
+def remove(uid, http_port, gevent_port):
+    agentlib.validate(uid=uid, http_port=http_port, gevent_port=gevent_port)
     curstatus = status()
     existing_containers = {v['uid'] for v in curstatus['instances']}
     if uid in existing_containers:
         agentlib.execute(['docker', 'rm', uid])
 
-    for fname in ['gevent-ports.conf', 'http-ports.conf']:
-        match, target, mapping = agentlib.load_nginx_map(fname)
-        mapping.pop(hostname, None)
-        agentlib.store_nginx_map(fname, match, target, mapping)
-    agentlib.execute(['systemctl', 'reload', 'nginx'])
+    sync_urls(
+        hostnames=[],
+        http_port=http_port,
+        gevent_port=gevent_port,
+    )
 
     existing_dbs = {v['datname'] for v in curstatus['pg_databases']}
     existing_users = {v['usename'] for v in curstatus['pg_users']}
@@ -333,7 +333,7 @@ def config(uid, conf):
 
 @agentlib.register
 def sync_urls(uid, hostnames, http_port, gevent_port):
-    agentlib.validate(uid=uid)
+    agentlib.validate(uid=uid, hostnames=hostnames)
 
     for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
         match, target, mapping = agentlib.load_nginx_map(fname)
@@ -341,7 +341,6 @@ def sync_urls(uid, hostnames, http_port, gevent_port):
         mapping = {d: p for d, p in mapping.items() if int(p.split(':')[-1]) != int(port)}
         # Add new ones
         for hostname in hostnames:
-            agentlib.validate(hostname=hostname)
             mapping[hostname] = f'127.0.0.1:{port}'
 
         agentlib.store_nginx_map(fname, match, target, mapping)
@@ -380,19 +379,13 @@ def reset(uid):
 
 
 @agentlib.register
-def create(uid, hostname, http_port, gevent_port, modules):
-    agentlib.validate(uid=uid, hostname=hostname, http_port=http_port, gevent_port=gevent_port, modules=modules)
+def create(uid, hostnames, http_port, gevent_port, modules):
+    agentlib.validate(uid=uid, hostnames=hostnames, http_port=http_port, gevent_port=gevent_port, modules=modules)
     pw = secrets.token_hex(32)
 
     config = agentlib.render_odoo_config(uid, pw, modules)
 
-    for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
-        match, target, mapping = agentlib.load_nginx_map(fname)
-        mapping[hostname] = f'127.0.0.1:{port}'
-        agentlib.store_nginx_map(fname, match, target, mapping)
-
-    agentlib.execute(['systemctl', 'reload', 'nginx'])
-
+    sync_urls(hostnames, http_port, gevent_port)
 
     queries = [
         (sql.SQL("CREATE ROLE {uid} NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT LOGIN ENCRYPTED PASSWORD %s").format(uid=sql.Identifier(uid)), (pw,)),

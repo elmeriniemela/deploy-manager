@@ -206,7 +206,7 @@ def execute(cmd, **kwargs):
 
 def validate(**kwargs):
     validators = {
-        'hostname': is_valid_hostname,
+        'hostnames': is_valid_hostnames,
         'uid': is_valid_uid,
         'http_port': is_valid_port,
         'gevent_port': is_valid_port,
@@ -248,25 +248,29 @@ def is_valid_uid(uid):
         raise ValueError("Invalid UID, expected a hexadecimal number.")
     return True
 
-def is_valid_hostname(hostname):
-    assert isinstance(hostname, str), "Hostname should be a string."
-    import re
-    # https://stackoverflow.com/a/33214423
-    if hostname[-1] == ".":
-        # strip exactly one dot from the right, if present
-        hostname = hostname[:-1]
-    if len(hostname) > 253:
-        raise ValueError("The hostname can't be longer than 253 characters.")
+def is_valid_hostnames(hostnames):
+    assert isinstance(hostnames, list), f"Hostnames should be a list not {type(hostnames)}"
+    for hostname in hostnames:
+        assert isinstance(hostname, str), "Hostname should be a string."
+        import re
+        # https://stackoverflow.com/a/33214423
+        if hostname[-1] == ".":
+            # strip exactly one dot from the right, if present
+            hostname = hostname[:-1]
+        if len(hostname) > 253:
+            raise ValueError("The hostname can't be longer than 253 characters.")
 
-    labels = hostname.split(".")
+        labels = hostname.split(".")
+        if len(labels) < 2:
+            raise ValueError("There should be at least one dot in the domain name.")
 
-    # the TLD must be not all-numeric
-    if re.match(r"[0-9]+$", labels[-1]):
-        raise ValueError("The top level domain must be not all-numeric.")
+        # the TLD must be not all-numeric
+        if re.match(r"[0-9]+$", labels[-1]):
+            raise ValueError("The top level domain must be not all-numeric.")
 
-    allowed = re.compile(r"(?!-)[a-z0-9-]{1,63}(?<!-)$")
-    for label in labels:
-        if not allowed.match(label):
-            raise ValueError("Invalid characters in '%s'. Not allowed for a domain name." % label)
+        allowed = re.compile(r"(?!-)[a-z0-9-]{1,63}(?<!-)$")
+        for label in labels:
+            if not allowed.match(label):
+                raise ValueError("Invalid characters in '%s'. Not allowed for a domain name." % label)
 
     return True
