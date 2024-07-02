@@ -239,6 +239,7 @@ def ssl_wildcard():
         '--dns-cloudflare-credentials', '/root/cloudflare.ini',
         '-d', '*.eniemela.fi',
         '-d', 'eniemela.fi',
+        '--expand',
         '--preferred-challenges', 'dns-01',
         '-n', '--agree-tos',
         '-m=niemela.elmeri@gmail.com',
