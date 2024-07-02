@@ -238,6 +238,7 @@ def ssl_wildcard():
         'certbot', 'certonly', '--dns-cloudflare',
         '--dns-cloudflare-credentials', '/root/cloudflare.ini',
         '-d', '*.eniemela.fi',
+        '-d', 'eniemela.fi',
         '--preferred-challenges', 'dns-01',
         '-n', '--agree-tos',
         '-m=niemela.elmeri@gmail.com',
