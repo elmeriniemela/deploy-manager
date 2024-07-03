@@ -43,7 +43,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
-* `docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
+* `docker plugin install grafana/loki-docker-driver --alias loki --grant-all-permissions`
 
 #### Prometheus note exporter monitoring:
 * docker run -d \
