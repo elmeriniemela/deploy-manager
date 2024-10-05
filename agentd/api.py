@@ -51,6 +51,7 @@ def status():
         }
         try:
             mod['commit'] = agentlib.execute(f'cd {dirname} && git rev-parse HEAD', shell=True).stdout.strip()
+            mod['commit_date'] = agentlib.execute(f'cd {dirname} && git log -1 --format=%cd --date=iso', shell=True).stdout.strip()
             mod['branch'] = agentlib.execute(f'cd {dirname} && git rev-parse --abbrev-ref HEAD', shell=True).stdout.strip()
             mod['url'] = agentlib.execute(f'cd {dirname} && git remote get-url origin', shell=True).stdout.strip()
         except Exception as error:
@@ -66,6 +67,7 @@ def status():
         'pg_databases': pg_databases,
         'agent': {
             'commit': agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout.strip(),
+            'commit_date': agentlib.execute(['git', 'log', '-1', '--format=%cd', '--date=iso']).stdout.strip(),
         },
         'modules': modules,
     }
