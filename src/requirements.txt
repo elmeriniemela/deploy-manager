@@ -20,3 +20,4 @@ jwcrypto
 oauthlib
 requests_oauthlib
 lxml==4.9.3
+numpy==1.26.4
