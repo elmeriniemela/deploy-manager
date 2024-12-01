@@ -19,3 +19,4 @@ pypdf
 jwcrypto
 oauthlib
 requests_oauthlib
+lxml==4.9.3
