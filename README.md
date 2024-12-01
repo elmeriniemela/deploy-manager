@@ -21,10 +21,8 @@
 * `docker login ghcr.io -u elmeriniemela`
 
 #### Installation
-* `git config --global credential.helper store`
 * `git clone -b 17.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
-* `git submodule update --init`
 * `./ubuntu-install.sh`
 * `systemctl edit docker.service`
 ```
@@ -32,6 +30,9 @@
 ExecStart=
 ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/containerd/containerd.sock
 ```
+* `systemctl daemon-reload`
+* `systemctl restart docker.service`
+* `systemctl restart postgresql`
 
 #### Promtail setup
 * docker run \
@@ -39,7 +40,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     -v /var/log:/var/log \
     --restart unless-stopped \
     --name promtail -d \
-    grafana/promtail:2.9.4 -config.file=/etc/promtail/config.yml
+    grafana/promtail:latest -config.file=/etc/promtail/config.yml
 
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
@@ -114,5 +115,4 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * Delete everything: `docker system prune -a --volumes`
 * Remote access: https://docs.docker.com/config/daemon/remote-access/
 * Docker API: https://docs.docker.com/engine/api/latest/
-* Mount storagebox `rclone mount storagebox: /root/storagebox --daemon`
 * Login as root: `docker exec -it -u root <uid> bash`
