@@ -64,6 +64,10 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * https://wiki.postgresql.org/wiki/Shared_Database_Hosting
 * https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
 
+#### Backup setup:
+* `crontab -e`
+* `30 00 * * * cd /opt/odoo-agent && ./agentd/backup.py`
+
 #### New DB
 * `createdb 618b4082e2d7`
 * `psql postgres -c "CREATE USER 618b4082e2d7 WITH ENCRYPTED PASSWORD '618b4082e2d7'"`
