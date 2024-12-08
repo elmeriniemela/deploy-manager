@@ -66,7 +66,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 
 #### Backup setup:
 * `crontab -e`
-* `30 00 * * * cd /opt/odoo-agent && ./agentd/backup.py`
+* `30 00 * * * cd /opt/odoo-agent && /root/agent-venv/bin/python ./agentd/backup.py`
 
 #### New DB
 * `createdb 618b4082e2d7`
