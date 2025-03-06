@@ -144,6 +144,12 @@ def backup(uid, trigger='manual'):
         '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
         f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
     ])
+    agentlib.execute([
+        'rclone', 'sync',
+        '--transfers=16',
+        '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
+        f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/previous_filestore'
+    ])
     _logger.info(f"Backup done: {trigger} backup for {uid}")
     return {
         'backups': agentlib.list_backups(uid),
