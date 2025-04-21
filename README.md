@@ -53,6 +53,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `systemctl restart nginx`
 
 #### Promtail setup
+* Attach new server to the same private network as "monitoring" in hetzner cloud.
 * docker run \
     -v ./promtail:/etc/promtail \
     -v /var/log:/var/log \
