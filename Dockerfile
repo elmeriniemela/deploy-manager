@@ -119,11 +119,10 @@ RUN npm install -g rtlcss
 COPY src/requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --break-system-packages
 
-RUN useradd -ms /bin/bash odoo
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt for users addons
 VOLUME ["/var/lib/odoo", "/mnt"]
 
-RUN mkdir -p /var/lib/odoo && chown -R odoo /var/lib/odoo
+RUN mkdir -p /var/lib/odoo && chown -R ubuntu /var/lib/odoo
 
 RUN ln -s /mnt/odoo/odoo-bin /usr/bin/odoo
 
@@ -134,6 +133,6 @@ EXPOSE 8069 8072
 ENV ODOO_RC=/etc/odoo/odoo.conf
 
 # Set default user when running the container
-USER odoo
+USER ubuntu
 
 CMD ["odoo"]
