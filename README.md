@@ -20,6 +20,13 @@
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
 * `docker login ghcr.io -u elmeriniemela`
 
+#### Prerequisite
+* `scp .gitconfig agent18.eniemela.fi:`
+* `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
+* `cat id_ecdsa.pub`
+* go to github / settings / SSH keys / Add Odoo 18.0 Hetzner Server key
+
+
 #### Installation
 * `git clone -b 18.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
