@@ -18,14 +18,14 @@
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
-* Go to Settings / Developer / New personal access token (classic) / Add ''
+* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 18.0 Hetzner Server key' + add repo and write:packages
 * `docker login ghcr.io -u elmeriniemela`
 
 #### Prerequisite
 * `scp .gitconfig agent18.eniemela.fi:`
 * `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
 * `cat id_ecdsa.pub`
-* go to github / settings / SSH keys / Add 'Odoo 18.0 Hetzner Server key' + add repo and write:packages
+* go to github / settings / SSH keys / Add 'Odoo 18.0 Hetzner Server key'
 * `mkdir -p /root/.config/rclone/`
 * `cp rclone.conf /root/.config/rclone/rclone.conf`
 * `vim /root/.config/rclone/rclone.conf`
