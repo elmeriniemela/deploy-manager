@@ -1,4 +1,6 @@
-### Odoo Docker
+# Odoo Docker
+
+## Installation
 
 #### Architecture:
 * Custom docker image with odoo source install + custom pip packages.
@@ -71,6 +73,18 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     quay.io/prometheus/node-exporter:latest \
     --path.rootfs=/host
 
+#### Building the image
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:18.0 /opt/odoo-agent`
+* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
+* `sudo docker push ghcr.io/elmeriniemela/odoo-src:18.0`
+
+
+#### Backup setup:
+* `crontab -e`
+* `30 00 * * * cd /opt/odoo-agent && /root/agent-venv/bin/python ./agentd/backup.py`
+
+
+## Other notes
 
 #### Pulling the image
 * `docker pull ghcr.io/elmeriniemela/odoo-src:18.0`
@@ -78,36 +92,6 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 #### DB isolation:
 * https://wiki.postgresql.org/wiki/Shared_Database_Hosting
 * https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
-
-#### Backup setup:
-* `crontab -e`
-* `30 00 * * * cd /opt/odoo-agent && /root/agent-venv/bin/python ./agentd/backup.py`
-
-#### New DB
-* `createdb 618b4082e2d7`
-* `psql postgres -c "CREATE USER 618b4082e2d7 WITH ENCRYPTED PASSWORD '618b4082e2d7'"`
-* `psql postgres -c "ALTER DATABASE 618b4082e2d7 OWNER TO 618b4082e2d7"`
-* `psql postgres -c "REVOKE CONNECT ON DATABASE 618b4082e2d7 FROM PUBLIC"`
-* docker run \
-    --log-driver=loki \
-    --log-opt loki-url="https://loki.eniemela.fi:3110/loki/api/v1/push" \
-    --log-opt loki-retries=5 \
-    --log-opt loki-max-backoff=3s \
-    --log-opt loki-timeout=5s \
-    --log-opt loki-tls-insecure-skip-verify=true \
-    --log-opt keep-file=true \
-    --log-opt loki-batch-size=400 \
-    -v /opt/odoo-agent/src:/mnt:ro \
-    -v /var/run/postgresql/:/var/run/postgresql/ \
-    -v /etc/odoo/618b4082e2d7:/etc/odoo:ro \
-    -v 618b4082e2d7:/var/lib/odoo \
-    -p 127.0.0.1:49152:8069 \
-    -p [::1]:49152:8069 \
-    -p 127.0.0.1:49153:8072 \
-    -p [::1]:49153:8072 \
-    --restart unless-stopped \
-    --name 618b4082e2d7 -t -d ghcr.io/elmeriniemela/odoo-src:18.0
-
 
 ### Local setup
 * sudo docker run \
@@ -121,12 +105,6 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * sudo docker restart eniemela_16 && sudo docker attach eniemela_16
 * sudo docker exec -it -u root eniemela_16 bash
 * sudo docker restart eniemela_16 && sudo docker exec -it -u root eniemela_16 odoo -u investment_portfolio --http-port=9999 --stop-after-init && sudo docker restart eniemela_16 && sudo docker attach eniemela_16
-
-#### Building the image
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:18.0 /opt/odoo-agent`
-* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
-* `sudo docker push ghcr.io/elmeriniemela/odoo-src:18.0`
-
 
 #### Random notes
 * Docker logs
