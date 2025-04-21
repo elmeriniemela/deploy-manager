@@ -171,6 +171,10 @@ def fshealth(uid):
 
 @agentlib.register
 def restore(src_uid, dst_uid, trigger, backup_file):
+    _restore(src_uid, dst_uid, trigger, backup_file)
+    restart(dst_uid)
+
+def _restore(src_uid, dst_uid, trigger, backup_file):
     agentlib.validate(uid=src_uid)
     agentlib.validate(uid=dst_uid)
     agentlib.ensure_backups_mounted()
@@ -185,16 +189,31 @@ def restore(src_uid, dst_uid, trigger, backup_file):
 
     commands = [
         [
-            'rclone', 'copy',
+            'rclone', 'sync',
             '--transfers=16',
             f'awsbucket:odoobackup1/{src_uid}/previous_filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'
         ],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
         ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, agentlib.dump_path(src_uid, trigger, backup_file)],
-        ['docker', 'restart', dst_uid],
     ]
     for cmd in commands:
         agentlib.execute(cmd)
+
+
+@agentlib.register
+def oca_migrate(src_uid, dst_uid, trigger, backup_file):
+    restore(src_uid, dst_uid, trigger, backup_file)
+    proc = agentlib.execute([
+        'docker', 'exec', dst_uid, 'odoo',
+        '--update=all',
+        '--http-port=9999',
+        '--stop-after-init',
+        '--load=base,web,openupgrade_framework',
+        '--upgrade-path=/mnt/OpenUpgrade/openupgrade_scripts/scripts',
+    ])
+    restart(dst_uid)
+    return (proc.stderr or '').strip() or (proc.stdout or '').strip()
+
 
 @agentlib.register
 def upgrade(uid):
