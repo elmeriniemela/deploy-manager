@@ -9,9 +9,9 @@ RUN apt-get update && apt-get -y install locales
 
 # Generate locale C.UTF-8 for postgres and general locale data
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # Retrieve the target architecture to install the correct wkhtmltopdf package
 ARG TARGETARCH
@@ -131,7 +131,7 @@ RUN ln -s /mnt/odoo/odoo-bin /usr/bin/odoo
 EXPOSE 8069 8072
 
 # Set the default config file
-ENV ODOO_RC /etc/odoo/odoo.conf
+ENV ODOO_RC=/etc/odoo/odoo.conf
 
 # Set default user when running the container
 USER odoo
