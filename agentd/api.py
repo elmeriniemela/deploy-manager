@@ -191,6 +191,7 @@ def _restore(src_uid, dst_uid, trigger, backup_file):
         [
             'rclone', 'sync',
             '--transfers=16',
+            '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
             f'awsbucket:odoobackup1/{src_uid}/previous_filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'
         ],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
