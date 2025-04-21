@@ -1,5 +1,6 @@
 FROM ubuntu:noble
-MAINTAINER eNiemela Oy
+LABEL org.opencontainers.image.authors="niemela.elmeri@gmail.com"
+LABEL org.opencontainers.image.description="Odoo 18.0 image"
 
 SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 
