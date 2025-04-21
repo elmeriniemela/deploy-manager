@@ -154,7 +154,7 @@ def odoo_docker_run(uid, http_port, gevent_port):
         '-p', f'[::1]:{gevent_port}:8072',
         '--restart', 'unless-stopped',
         '--name', uid,
-        '-t', '-d', 'ghcr.io/elmeriniemela/odoo-src:17.0',
+        '-t', '-d', 'ghcr.io/elmeriniemela/odoo-src:18.0',
     ]
 
 def list_backups(uid):

@@ -205,8 +205,8 @@ def upgrade(uid):
             d = ast.literal_eval(manifest.read().decode('latin1'))
             version = d.get('version', '0.0')
             module = os.path.basename(os.path.dirname(fname))
-            if not version.startswith('17.0.'):
-                version = '17.0.' + version
+            if not version.startswith('18.0.'):
+                version = '18.0.' + version
             codever[module] = version
 
     with agentlib.psql(dbname=uid) as cur:

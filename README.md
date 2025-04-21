@@ -2,12 +2,12 @@
 
 #### Architecture:
 * Custom docker image with odoo source install + custom pip packages.
-    * https://github.com/odoo/odoo/blob/17.0/debian/control
+    * https://github.com/odoo/odoo/blob/18.0/debian/control
     * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 * CI pipeline with Github actions:
     * Actions defined here at `src/odoo_addons/.github/workflows/test.yml`
     * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
-    * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo17.0
+    * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo18.0
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 
 * XML-RPC agent for running remote commands
@@ -21,7 +21,7 @@
 * `docker login ghcr.io -u elmeriniemela`
 
 #### Installation
-* `git clone -b 17.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
+* `git clone -b 18.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
 * `./ubuntu-install.sh`
 * `systemctl edit docker.service`
@@ -57,7 +57,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 
 
 #### Pulling the image
-* `docker pull ghcr.io/elmeriniemela/odoo-src:17.0`
+* `docker pull ghcr.io/elmeriniemela/odoo-src:18.0`
 
 #### DB setup:
 * `su - postgres -c "createuser -s root"`
@@ -91,7 +91,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     -p 127.0.0.1:49153:8072 \
     -p [::1]:49153:8072 \
     --restart unless-stopped \
-    --name 618b4082e2d7 -t -d ghcr.io/elmeriniemela/odoo-src:17.0
+    --name 618b4082e2d7 -t -d ghcr.io/elmeriniemela/odoo-src:18.0
 
 
 ### Local setup
@@ -102,15 +102,15 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     -v /home/elmeri/.local/share/Odoo:/var/lib/odoo \
     -p 127.0.0.1:8016:8069 \
     -p 127.0.0.1:9016:8072 \
-    --name eniemela_16 -ti ghcr.io/elmeriniemela/odoo-src:17.0
+    --name eniemela_16 -ti ghcr.io/elmeriniemela/odoo-src:18.0
 * sudo docker restart eniemela_16 && sudo docker attach eniemela_16
 * sudo docker exec -it -u root eniemela_16 bash
 * sudo docker restart eniemela_16 && sudo docker exec -it -u root eniemela_16 odoo -u investment_portfolio --http-port=9999 --stop-after-init && sudo docker restart eniemela_16 && sudo docker attach eniemela_16
 
 #### Building the image
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:17.0 /opt/odoo-agent`
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:18.0 /opt/odoo-agent`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
-* `sudo docker push ghcr.io/elmeriniemela/odoo-src:17.0`
+* `sudo docker push ghcr.io/elmeriniemela/odoo-src:18.0`
 
 
 #### Random notes

@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 MAINTAINER eNiemela Oy
 
 SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
