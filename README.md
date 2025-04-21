@@ -45,6 +45,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `systemctl daemon-reload`
 * `systemctl restart docker.service`
 * `systemctl restart postgresql`
+* `su - postgres -c "createuser -s root"`
 * `source /root/agent-venv/bin/activate`
 * `python agentd/api.py ssl_wildcard`
 * `systemctl restart nginx`
@@ -74,8 +75,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 #### Pulling the image
 * `docker pull ghcr.io/elmeriniemela/odoo-src:18.0`
 
-#### DB setup:
-* `su - postgres -c "createuser -s root"`
+#### DB isolation:
 * https://wiki.postgresql.org/wiki/Shared_Database_Hosting
 * https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
 
