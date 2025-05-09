@@ -23,4 +23,4 @@ requests_oauthlib
 lxml==4.9.3
 numpy==1.26.4
 yfinance
-html-to-markdown
+markdownify
