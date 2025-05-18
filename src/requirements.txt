@@ -4,7 +4,7 @@ openpyxl
 pysftp
 cryptography
 paramiko
-git+https://github.com/elmeriniemela/bitcoinlib
+btclib
 git+https://github.com/OCA/openupgradelib.git@master#egg=openupgradelib
 xmltodict
 dicttoxml
