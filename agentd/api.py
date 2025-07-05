@@ -294,16 +294,20 @@ def self_upgrade(uid, callback_url):
                 'uid': uid,
                 'logs': logs,
             }
+            timeout=15,
         )
         _logger.info(resp.text)
         restart(uid)
+        time.sleep(1)
         resp = requests.post(
             url=callback_url,
             json={
                 'method': 'restart',
                 'uid': uid,
-            }
+            },
+            timeout=15,
         )
+        _logger.info(resp.text)
 
     threading.Thread(target=thread_worker).start()
 
