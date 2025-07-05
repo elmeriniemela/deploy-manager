@@ -297,6 +297,13 @@ def self_upgrade(uid, callback_url):
         )
         _logger.info(resp.text)
         restart(uid)
+        resp = requests.post(
+            url=callback_url,
+            json={
+                'method': 'restart',
+                'uid': uid,
+            }
+        )
 
     threading.Thread(target=thread_worker).start()
 
