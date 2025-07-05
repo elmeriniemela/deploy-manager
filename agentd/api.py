@@ -298,17 +298,22 @@ def self_upgrade(uid, callback_url):
         )
         _logger.info(resp.text)
         restart(uid)
-        time.sleep(1)
-        resp = requests.post(
-            url=callback_url,
-            timeout=15,
-            json={
-                'method': 'restart',
-                'uid': uid,
-            }
-        )
-        _logger.info(resp.text)
 
+        for tryno in range(1, 6):
+            time.sleep(3)
+            resp = requests.post(
+                url=callback_url,
+                timeout=15,
+                json={
+                    'method': 'restart',
+                    'uid': uid,
+                }
+            )
+            _logger.info(resp.text)
+            if resp.status_code == 200:
+                break
+        else:
+            _logger.error("Host not responding after restart.")
     threading.Thread(target=thread_worker).start()
 
 
