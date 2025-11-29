@@ -8,3 +8,6 @@ User=root
 ExecStart=/usr/bin/rclone mount awsbucket:odoobackup1 /root/backups --vfs-cache-mode full
 ExecStop=fusermount -u /root/backups
 Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
