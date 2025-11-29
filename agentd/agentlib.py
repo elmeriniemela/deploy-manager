@@ -120,9 +120,7 @@ def backups_mounted():
     return os.path.ismount('/root/backups')
 
 def ensure_backups_mounted():
-    if not backups_mounted():
-        execute(['rclone', 'mount', 'awsbucket:odoobackup1', '/root/backups', '--daemon', '--vfs-cache-mode', 'full'])
-    assert backups_mounted(), "Not mounted."
+    assert backups_mounted(), "Backup dir not mounted. Something wrong with rclone-mount.service.."
 
 def fname_to_ts(fname):
     return datetime.datetime.strptime(fname, '%Y-%m-%dT%H-%M-%S.pgc')

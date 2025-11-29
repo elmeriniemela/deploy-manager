@@ -1,0 +1,10 @@
+[Unit]
+Description=rclone-mount
+After=multi-user.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/rclone mount awsbucket:odoobackup1 /root/backups --vfs-cache-mode full
+ExecStop=fusermount -u /root/backups
+Restart=on-abort
