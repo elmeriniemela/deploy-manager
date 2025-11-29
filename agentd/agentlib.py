@@ -116,10 +116,13 @@ def save_odoo_config(uid, conf):
     with open(f'/etc/odoo/{uid}/odoo.conf', 'w') as fp:
         fp.write(conf)
 
+def backups_mounted():
+    return os.path.ismount('/root/backups')
+
 def ensure_backups_mounted():
-    if not os.path.ismount('/root/backups'):
+    if not backups_mounted():
         execute(['rclone', 'mount', 'awsbucket:odoobackup1', '/root/backups', '--daemon', '--vfs-cache-mode', 'full'])
-    assert os.path.ismount('/root/backups'), "Not mounted."
+    assert backups_mounted(), "Not mounted."
 
 def fname_to_ts(fname):
     return datetime.datetime.strptime(fname, '%Y-%m-%dT%H-%M-%S.pgc')
@@ -158,8 +161,9 @@ def odoo_docker_run(uid, http_port, gevent_port):
     ]
 
 def list_backups(uid):
-    ensure_backups_mounted()
     backups = []
+    if not backups_mounted():
+        return backups
 
     for path in glob.glob(dump_path(uid, '*', '*.pgc')):
         fname = os.path.basename(path)
