@@ -116,14 +116,16 @@ RUN apt-get update && \
 
 # Install rtlcss (on Debian buster)
 RUN npm install -g rtlcss
+
+# Install custom pip dependencies.
 COPY src/requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --break-system-packages
 
 # Set permissions and Mount /var/lib/odoo to allow restoring filestore and /mnt for users addons
 VOLUME ["/var/lib/odoo", "/mnt"]
-
 RUN mkdir -p /var/lib/odoo && chown -R ubuntu /var/lib/odoo
 
+# Add the Odoo binary to path.
 RUN ln -s /mnt/odoo/odoo-bin /usr/bin/odoo
 
 # Expose Odoo services
