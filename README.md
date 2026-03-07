@@ -1,4 +1,7 @@
-# Odoo Docker
+# Deployment manager for Odoo images
+
+## Abstract
+This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC agent for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
 
 ## Installation
 
@@ -35,7 +38,7 @@
 * `vim /root/cloudflare.ini`
 
 #### Installation
-* `git clone -b 18.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/odoo-agent.git /opt/odoo-agent`
+* `git clone -b 18.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/odoo-agent`
 * `cd /opt/odoo-agent`
 * `./ubuntu-install.sh`
 * `systemctl edit docker.service`
