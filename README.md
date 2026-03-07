@@ -96,9 +96,9 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 
 ### Local setup
 * sudo docker run \
-    -v /home/elmeri/Work/16:/mnt:ro \
+    -v /home/elmeri/Odoo/src/16:/mnt:ro \
     -v /var/run/postgresql:/var/run/postgresql \
-    -v /home/elmeri/Work/16/own-docker.conf:/etc/odoo/odoo.conf:ro \
+    -v /home/elmeri/Odoo/src/16/own-docker.conf:/etc/odoo/odoo.conf:ro \
     -v /home/elmeri/.local/share/Odoo:/var/lib/odoo \
     -p 127.0.0.1:8016:8069 \
     -p 127.0.0.1:9016:8072 \
