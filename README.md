@@ -56,6 +56,7 @@ flowchart LR
     * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo18.0
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 * Monitoring
+    * One monitoring server where multiple Odoo servers send diagnostics and logging data.
     * prometheus+grafana+loki: https://github.com/elmeriniemela/grafana-loki
     * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
 
