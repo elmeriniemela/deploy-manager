@@ -42,6 +42,10 @@ flowchart LR
 ## Installation
 
 #### Architecture:
+* XML-RPC deployment-manager for running remote commands
+    * Deploy and manage Odoo containers.
+    * Git operations to allow an Odoo application that updates itself.
+    * Manage custom NGINX/SSL configurations for the Odoo containers.
 * Custom docker image with odoo source install + custom pip packages.
     * Packages: https://github.com/elmeriniemela/deploy-manager/pkgs/container/odoo-src
     * Github container registry: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
@@ -51,8 +55,6 @@ flowchart LR
     * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
     * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo18.0
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
-
-* XML-RPC agent for running remote commands
 * Monitoring
     * prometheus+grafana+loki: https://github.com/elmeriniemela/grafana-loki
     * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
