@@ -6,26 +6,29 @@ This project automates self-hosted Odoo deployments on a Linux host. It provides
 ## System architecture
 ```mermaid
 flowchart LR
-    GH[GitHub Actions CI] --> GHCR[GHCR odoo-src image]
-    GHCR --> Host
+    GH["GitHub Actions CI"] --> GHCR["GHCR odoo-src image"]
+    GHCR --> OdooHost
 
-    User[Users / Browsers] --> DNS[DNS / Hostname]
-    DNS --> Nginx[nginx reverse proxy + SSL]
-    Nginx --> Odoo[Odoo Docker containers]
-    Odoo --> PG[(PostgreSQL)]
-    Odoo --> FS[(Filestore volumes)]
+    User["Users and Browsers"] --> DNS["DNS and Hostname"]
+    DNS --> Nginx["nginx reverse proxy and SSL"]
+    Nginx --> Odoo["Odoo Docker containers"]
+    Odoo --> PG["PostgreSQL"]
+    Odoo --> FS["Filestore volumes"]
+    Odoo --> API["Operator and API clients from Odoo containers"]
 
-    API[Operator / API clients] --> Agent[XML-RPC agent]
-    Agent --> Docker[Docker API]
-    Agent --> NginxCfg[nginx routing config]
-    Agent --> Cert[Wildcard SSL management]
-    Agent --> Backup[Backup jobs]
-    Backup --> PGDump[pg_dump / pg_restore]
-    Backup --> Rclone[rclone remote storage]
+    API --> Agent["XML-RPC agent"]
+    Agent --> Docker["Docker API"]
+    Docker --> Odoo
+    Agent --> NginxCfg["nginx routing config"]
+    Agent --> Cert["Wildcard SSL management"]
+    Agent --> Backup["Backup jobs"]
+    Backup --> PGDump["pg_dump and pg_restore"]
+    Backup --> Rclone["rclone remote storage"]
 
-    subgraph Host[Linux host]
+    subgraph OdooHost["Linux host - Odoo"]
       Nginx
       Odoo
+      API
       PG
       FS
       Agent
@@ -36,7 +39,17 @@ flowchart LR
       PGDump
     end
 
-    Mon[Prometheus / Grafana / Loki] --> Host
+    Metrics["Node exporter metrics"]
+    Logs["Container and host logs"]
+    Odoo --> Metrics
+    Odoo --> Logs
+
+    subgraph MonHost["Linux host - Monitoring"]
+      Mon["Prometheus Grafana Loki"]
+    end
+
+    Metrics --> Mon
+    Logs --> Mon
 ```
 
 ## Installation
@@ -56,7 +69,7 @@ flowchart LR
     * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo18.0
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 * Monitoring
-    * One monitoring server where multiple Odoo servers send diagnostics and logging data.
+    * One monitoring server where multiple Odoo servers can send diagnostics and logging data.
     * prometheus+grafana+loki: https://github.com/elmeriniemela/grafana-loki
     * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
 

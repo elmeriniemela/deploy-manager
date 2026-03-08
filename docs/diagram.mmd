@@ -1,0 +1,45 @@
+flowchart LR
+    GH["GitHub Actions CI"] --> GHCR["GHCR odoo-src image"]
+    GHCR --> OdooHost
+
+    User["Users and Browsers"] --> DNS["DNS and Hostname"]
+    DNS --> Nginx["nginx reverse proxy and SSL"]
+    Nginx --> Odoo["Odoo Docker containers"]
+    Odoo --> PG["PostgreSQL"]
+    Odoo --> FS["Filestore volumes"]
+    Odoo --> API["Operator and API clients from Odoo containers"]
+
+    API --> Agent["XML-RPC agent"]
+    Agent --> Docker["Docker API"]
+    Docker --> Odoo
+    Agent --> NginxCfg["nginx routing config"]
+    Agent --> Cert["Wildcard SSL management"]
+    Agent --> Backup["Backup jobs"]
+    Backup --> PGDump["pg_dump and pg_restore"]
+    Backup --> Rclone["rclone remote storage"]
+
+    subgraph OdooHost["Linux host - Odoo"]
+      Nginx
+      Odoo
+      API
+      PG
+      FS
+      Agent
+      Docker
+      NginxCfg
+      Cert
+      Backup
+      PGDump
+    end
+
+    Metrics["Node exporter metrics"]
+    Logs["Container and host logs"]
+    Odoo --> Metrics
+    Odoo --> Logs
+
+    subgraph MonHost["Linux host - Monitoring"]
+      Mon["Prometheus Grafana Loki"]
+    end
+
+    Metrics --> Mon
+    Logs --> Mon
