@@ -3,6 +3,8 @@
 ## Abstract
 This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
 
+The XML-RPC API can be used from an Odoo instance to do self upgrades of Odoo source code.
+
 ## System architecture
 ```mermaid
 flowchart LR
