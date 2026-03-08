@@ -17,7 +17,7 @@ flowchart LR
     FS["Filestore volumes"]
     DeployManager["Deployment Manager"]
     Backup["Backups"]
-    Rclone["rclone remote storage"]
+    Rclone["rclone to S3 storage"]
     Monitoring["Prometheus Grafana Loki"]
     Metrics["System metrics"]
     Logs["Logging (promtail)"]
@@ -25,13 +25,14 @@ flowchart LR
 
     GHCR --> Docker
     Docker --> Odoo
-    Modules --> Odoo
+    Modules -->|self upgrades| Odoo
 
     User --> DNS
     DNS --> Nginx
-    Nginx --> Odoo
+    Nginx -->|hostname -> port| Odoo
     Odoo --> PG
     Odoo --> FS
+    Odoo -->|cloudflare api| DNS
     Odoo --> DeployManager
 
     Backup --> PG
@@ -40,7 +41,7 @@ flowchart LR
     DeployManager --> Docker
     DeployManager --> Nginx
     DeployManager --> Backup
-    DeployManager --> Modules
+    DeployManager -->|git| Modules
     Backup --> Rclone
 
     Docker --> Metrics
