@@ -1,48 +1,49 @@
 # Deployment manager for Odoo images
 
 ## Abstract
-This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC agent for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
+This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
 
 ## System architecture
 ```mermaid
 flowchart LR
-    GH["GitHub Actions CI"] --> GHCR["GHCR odoo-src image"]
-    GHCR --> OdooHost
+    GHCR["GHCR odoo-src image"]
+    GHCR --> Docker
+    Docker --> Odoo
+    Docker --> DeployManager
 
     User["Users and Browsers"] --> DNS["DNS and Hostname"]
-    DNS --> Nginx["nginx reverse proxy and SSL"]
-    Nginx --> Odoo["Odoo Docker containers"]
-    Odoo --> PG["PostgreSQL"]
+    DNS --> NginxCfg["nginx routing config and wildcard SSL"]
+    NginxCfg --> Odoo["Odoo instances"]
+    Odoo --> PG["PostgreSQL databases"]
     Odoo --> FS["Filestore volumes"]
-    Odoo --> API["Operator and API clients from Odoo containers"]
+    Odoo --> DeployManager["XML-RPC deployment manager"]
 
-    API --> Agent["XML-RPC agent"]
-    Agent --> Docker["Docker API"]
-    Docker --> Odoo
-    Agent --> NginxCfg["nginx routing config"]
-    Agent --> Cert["Wildcard SSL management"]
-    Agent --> Backup["Backup jobs"]
-    Backup --> PGDump["pg_dump and pg_restore"]
+    PG --> Backup
+    FS --> Backup
+
+    DeployManager --> Docker
+    DeployManager --> NginxCfg
+    DeployManager --> Backup["Backup jobs (pg_dump and pg_restore)"]
     Backup --> Rclone["rclone remote storage"]
 
-    subgraph OdooHost["Linux host - Odoo"]
-      Nginx
-      Odoo
-      API
-      PG
-      FS
-      Agent
-      Docker
-      NginxCfg
-      Cert
-      Backup
-      PGDump
+    Metrics["System metrics"]
+    Logs["Logging (promtail)"]
+    Docker --> Metrics
+    Docker --> Logs
+
+
+    subgraph OdooHost["Linux VPS - Odoo"]
+        Docker
+        Odoo
+        PG
+        FS
+        DeployManager
+        NginxCfg
+        Backup
+        Metrics
+        Logs
     end
 
-    Metrics["Node exporter metrics"]
-    Logs["Container and host logs"]
-    Odoo --> Metrics
-    Odoo --> Logs
 
     subgraph MonHost["Linux host - Monitoring"]
       Mon["Prometheus Grafana Loki"]
