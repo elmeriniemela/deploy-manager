@@ -72,7 +72,6 @@ flowchart LR
 
 ```
 
-#### Architecture:
 * XML-RPC deployment-manager for running remote commands
     * Deploy and manage Odoo containers.
     * Git operations to allow an Odoo application that updates itself.
