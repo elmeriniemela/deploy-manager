@@ -1,4 +1,4 @@
-# Deployment manager for Odoo images
+# Deployment Manager for Odoo images
 
 ## Abstract
 This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
@@ -7,29 +7,46 @@ This project automates self-hosted Odoo deployments on a Linux host. It provides
 ```mermaid
 flowchart LR
     GHCR["GHCR odoo-src image"]
+    User["Users and Browsers"]
+    DNS["DNS and Hostname"]
+    Nginx["Nginx routing and SSL"]
+    Odoo["Odoo instances"]
+    PG["PostgreSQL databases"]
+    FS["Filestore volumes"]
+    DeployManager["Deployment Manager"]
+    Backup["Backups"]
+    Rclone["rclone remote storage"]
+    Monitoring["Prometheus Grafana Loki"]
+    Metrics["System metrics"]
+    Logs["Logging (promtail)"]
+    Modules["Odoo modules"]
+
     GHCR --> Docker
     Docker --> Odoo
+    Modules --> Odoo
     Docker --> DeployManager
 
-    User["Users and Browsers"] --> DNS["DNS and Hostname"]
-    DNS --> NginxCfg["nginx routing config and wildcard SSL"]
-    NginxCfg --> Odoo["Odoo instances"]
-    Odoo --> PG["PostgreSQL databases"]
-    Odoo --> FS["Filestore volumes"]
-    Odoo --> DeployManager["XML-RPC deployment manager"]
+    User --> DNS
+    DNS --> Nginx
+    Nginx --> Odoo
+    Odoo --> PG
+    Odoo --> FS
+    Odoo --> DeployManager
 
     PG --> Backup
     FS --> Backup
 
     DeployManager --> Docker
-    DeployManager --> NginxCfg
-    DeployManager --> Backup["Backup jobs (pg_dump and pg_restore)"]
-    Backup --> Rclone["rclone remote storage"]
+    DeployManager --> Nginx
+    DeployManager --> Backup
+    DeployManager --> Modules
+    Backup --> Rclone
 
-    Metrics["System metrics"]
-    Logs["Logging (promtail)"]
     Docker --> Metrics
     Docker --> Logs
+
+    Metrics --> Monitoring
+    Logs --> Monitoring
 
 
     subgraph OdooHost["Linux VPS - Odoo"]
@@ -38,7 +55,8 @@ flowchart LR
         PG
         FS
         DeployManager
-        NginxCfg
+        Modules
+        Nginx
         Backup
         Metrics
         Logs
@@ -46,11 +64,10 @@ flowchart LR
 
 
     subgraph MonHost["Linux host - Monitoring"]
-      Mon["Prometheus Grafana Loki"]
+      Monitoring
     end
 
-    Metrics --> Mon
-    Logs --> Mon
+
 ```
 
 ## Installation
@@ -64,6 +81,9 @@ flowchart LR
     * Packages: https://github.com/elmeriniemela/deploy-manager/pkgs/container/odoo-src
     * Github container registry: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
     * Python packages from here: https://github.com/odoo/odoo/blob/18.0/debian/control
+* Odoo Modules:
+    * Allow self updates of Odoo source code
+    * Custom modules https://github.com/elmeriniemela/tabularium
 * CI pipeline with Github actions:
     * Actions defined here at `src/tabularium/.github/workflows/test.yml`
     * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
