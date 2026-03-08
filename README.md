@@ -186,7 +186,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * sudo docker exec -it -u root eniemela_16 bash
 * sudo docker restart eniemela_16 && sudo docker exec -it -u root eniemela_16 odoo -u investment_portfolio --http-port=9999 --stop-after-init && sudo docker restart eniemela_16 && sudo docker attach eniemela_16
 
-## Local mermaid-cli installation for AGENTS.md verification of the diagram:
+### Local mermaid-cli installation for AGENTS.md verification of the diagram:
 * `sudo pacman -S nodejs npm`
 * `sudo npm install -g @mermaid-js/mermaid-cli`
 * `npx puppeteer browsers install chrome-headless-shell@131.0.6778.204`. NOTE: mmdc pins to a specific version, adapt if needed.
