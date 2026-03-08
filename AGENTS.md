@@ -1,5 +1,6 @@
 
 ## Validate README.md diagram syntax:
 
-* `awk '/```mermaid/{flag=1;next}/```/{flag=0}flag' README.md > docs/diagram.mmd`
-* `mmdc -i docs/diagram.mmd -o docs/diagram.png`
+* `mkdir build`
+* `awk '/```mermaid/{flag=1;next}/```/{flag=0}flag' README.md > build/diagram.mmd`
+* `mmdc -i build/diagram.mmd -o build/diagram.png`

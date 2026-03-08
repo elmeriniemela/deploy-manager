@@ -11,7 +11,7 @@ flowchart LR
     GHCR["GHCR odoo-src image"]
     User["Users and Browsers"]
     DNS["DNS and Hostname"]
-    Nginx["Nginx routing and SSL"]
+    Nginx["NGINX routing and SSL"]
     Odoo["Odoo instances"]
     PG["PostgreSQL databases"]
     FS["Filestore volumes"]
@@ -26,7 +26,6 @@ flowchart LR
     GHCR --> Docker
     Docker --> Odoo
     Modules --> Odoo
-    Docker --> DeployManager
 
     User --> DNS
     DNS --> Nginx
@@ -35,8 +34,8 @@ flowchart LR
     Odoo --> FS
     Odoo --> DeployManager
 
-    PG --> Backup
-    FS --> Backup
+    Backup --> PG
+    Backup --> FS
 
     DeployManager --> Docker
     DeployManager --> Nginx
@@ -65,7 +64,7 @@ flowchart LR
     end
 
 
-    subgraph MonHost["Linux host - Monitoring"]
+    subgraph MonHost["Linux VPS - Monitoring"]
       Monitoring
     end
 
