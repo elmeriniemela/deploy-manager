@@ -7,19 +7,20 @@ This project automates self-hosted Odoo deployments on a Linux host. It provides
 
 #### Architecture:
 * Custom docker image with odoo source install + custom pip packages.
-    * https://github.com/odoo/odoo/blob/18.0/debian/control
-    * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+    * Packages: https://github.com/elmeriniemela/deploy-manager/pkgs/container/odoo-src
+    * Github container registry: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+    * Python packages from here: https://github.com/odoo/odoo/blob/18.0/debian/control
 * CI pipeline with Github actions:
-    * Actions defined here at `src/odoo_addons/.github/workflows/test.yml`
+    * Actions defined here at `src/tabularium/.github/workflows/test.yml`
     * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
     * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo18.0
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 
 * XML-RPC agent for running remote commands
-* Monitoring prometheus
-    * [grafana loki: DONE!](https://github.com/elmeriniemela/grafana-loki)
+* Monitoring
+    * prometheus+grafana+loki: https://github.com/elmeriniemela/grafana-loki
     * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
-    *
+
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
@@ -55,7 +56,8 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `python agentd/api.py ssl_wildcard`
 * `systemctl restart nginx`
 
-#### Promtail setup
+#### Promtail setup (TODO: deprecated, migrate to Alloy)
+* Promtail is an agent which ships the contents of local logs to a private Grafana Loki instance: https://grafana.com/docs/loki/latest/send-data/promtail/
 * Attach new server to the same private network as "monitoring" in hetzner cloud.
 * docker run \
     -v ./promtail:/etc/promtail \
@@ -68,7 +70,8 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
 * `docker plugin install grafana/loki-docker-driver --alias loki --grant-all-permissions`
 
-#### Prometheus note exporter monitoring:
+#### Prometheus node exporter monitoring:
+* Prometheus exporter for hardware and OS metrics exposed by *NIX kernels, written in Go with pluggable metric collectors: https://github.com/prometheus/node_exporter
 * docker run -d \
     --net="host" \
     --pid="host" \
