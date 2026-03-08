@@ -72,8 +72,6 @@ flowchart LR
 
 ```
 
-## Installation
-
 #### Architecture:
 * XML-RPC deployment-manager for running remote commands
     * Deploy and manage Odoo containers.
@@ -96,6 +94,8 @@ flowchart LR
     * prometheus+grafana+loki: https://github.com/elmeriniemela/grafana-loki
     * Import dashboards: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
 
+
+## Installation
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
