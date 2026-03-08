@@ -3,6 +3,42 @@
 ## Abstract
 This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC agent for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
 
+## System architecture
+```mermaid
+flowchart LR
+    GH[GitHub Actions CI] --> GHCR[GHCR odoo-src image]
+    GHCR --> Host
+
+    User[Users / Browsers] --> DNS[DNS / Hostname]
+    DNS --> Nginx[nginx reverse proxy + SSL]
+    Nginx --> Odoo[Odoo Docker containers]
+    Odoo --> PG[(PostgreSQL)]
+    Odoo --> FS[(Filestore volumes)]
+
+    API[Operator / API clients] --> Agent[XML-RPC agent]
+    Agent --> Docker[Docker API]
+    Agent --> NginxCfg[nginx routing config]
+    Agent --> Cert[Wildcard SSL management]
+    Agent --> Backup[Backup jobs]
+    Backup --> PGDump[pg_dump / pg_restore]
+    Backup --> Rclone[rclone remote storage]
+
+    subgraph Host[Linux host]
+      Nginx
+      Odoo
+      PG
+      FS
+      Agent
+      Docker
+      NginxCfg
+      Cert
+      Backup
+      PGDump
+    end
+
+    Mon[Prometheus / Grafana / Loki] --> Host
+```
+
 ## Installation
 
 #### Architecture:
