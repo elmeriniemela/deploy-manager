@@ -41,6 +41,10 @@ RUN apt-get update && \
         python3-paramiko \
         python3-cryptography \
         python3-openpyxl \
+        python3-requests-oauthlib \
+        python3-tinyrpc \
+        python3-platformdirs \
+        python3-jwcrypto \
         python3-numpy \
         python3-pandas \
         python3-xmltodict \
@@ -102,6 +106,7 @@ RUN apt-get update && \
         python3-reportlab \
         python3-requests \
         python3-stdnum \
+        python3-oauthlib \
         python3-tz \
         python3-werkzeug \
         python3-xlsxwriter \
