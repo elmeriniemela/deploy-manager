@@ -4,6 +4,6 @@ set -e
 
 git pull
 git submodule update
-systemctl restart odoo-agent.service
+systemctl restart deploy-manager.service
 
 exit 1

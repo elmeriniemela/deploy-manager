@@ -79,7 +79,9 @@ flowchart LR
 * Custom docker image with odoo source install + custom pip packages.
     * Packages: https://github.com/elmeriniemela/deploy-manager/pkgs/container/odoo-src
     * Github container registry: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
-    * Python packages from here: https://github.com/odoo/odoo/blob/18.0/debian/control
+    * Python packages from here: https://github.com/odoo/odoo/blob/19.0/debian/control
+        * Saved to apt.txt
+        * Print missing: while read -r x; do grep -q "$x" Dockerfile || echo "$x"; done < ./apt.txt
 * Odoo Modules:
     * Allow self updates of Odoo source code
     * Custom modules https://github.com/elmeriniemela/tabularium
@@ -98,14 +100,14 @@ flowchart LR
 
 #### Creating a personal github access token (READ only):
 * https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
-* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 18.0 Hetzner Server key' + add repo and write:packages
+* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
 * `docker login ghcr.io -u elmeriniemela`
 
 #### Prerequisite
-* `scp .gitconfig agent18.eniemela.fi:`
+* `scp .gitconfig agent19.eniemela.fi:`
 * `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
 * `cat id_ecdsa.pub`
-* go to github / settings / SSH keys / Add 'Odoo 18.0 Hetzner Server key'
+* go to github / settings / SSH keys / Add 'Odoo 19.0 Hetzner Server key'
 * `mkdir -p /root/.config/rclone/`
 * `cp rclone.conf /root/.config/rclone/rclone.conf`
 * `vim /root/.config/rclone/rclone.conf`
@@ -113,8 +115,8 @@ flowchart LR
 * `vim /root/cloudflare.ini`
 
 #### Installation
-* `git clone -b 18.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/odoo-agent`
-* `cd /opt/odoo-agent`
+* `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/deploy-manager`
+* `cd /opt/deploy-manager`
 * `./ubuntu-install.sh`
 * `systemctl edit docker.service`
 ```
@@ -155,20 +157,20 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     --path.rootfs=/host
 
 #### Building the image
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:18.0 /opt/odoo-agent`
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/deploy-manager`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
-* `sudo docker push ghcr.io/elmeriniemela/odoo-src:18.0`
+* `sudo docker push ghcr.io/elmeriniemela/odoo-src:19.0`
 
 
 #### Backup setup:
 * `crontab -e`
-* `30 00 * * * cd /opt/odoo-agent && /root/agent-venv/bin/python ./agentd/backup.py`
+* `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python ./agentd/backup.py`
 
 
 ## Other notes
 
 #### Pulling the image
-* `docker pull ghcr.io/elmeriniemela/odoo-src:18.0`
+* `docker pull ghcr.io/elmeriniemela/odoo-src:19.0`
 
 #### DB isolation:
 * https://wiki.postgresql.org/wiki/Shared_Database_Hosting
@@ -182,7 +184,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     -v /home/elmeri/.local/share/Odoo:/var/lib/odoo \
     -p 127.0.0.1:8016:8069 \
     -p 127.0.0.1:9016:8072 \
-    --name eniemela_16 -ti ghcr.io/elmeriniemela/odoo-src:18.0
+    --name eniemela_16 -ti ghcr.io/elmeriniemela/odoo-src:19.0
 * sudo docker restart eniemela_16 && sudo docker attach eniemela_16
 * sudo docker exec -it -u root eniemela_16 bash
 * sudo docker restart eniemela_16 && sudo docker exec -it -u root eniemela_16 odoo -u investment_portfolio --http-port=9999 --stop-after-init && sudo docker restart eniemela_16 && sudo docker attach eniemela_16

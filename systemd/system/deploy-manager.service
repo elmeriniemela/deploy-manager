@@ -1,10 +1,10 @@
 [Unit]
-Description=odoo-agent
+Description=deploy-manager
 
 [Service]
 User=root
-WorkingDirectory=/opt/odoo-agent
-ExecStart=/root/agent-venv/bin/python /opt/odoo-agent/agentd/run.py
+WorkingDirectory=/opt/deploy-manager
+ExecStart=/root/agent-venv/bin/python /opt/deploy-manager/agentd/run.py
 Restart=always
 RestartSec=1
 StartLimitInterval=120

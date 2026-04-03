@@ -22,10 +22,10 @@ curl https://rclone.org/install.sh | sudo bash
 python3 -m venv /root/agent-venv
 /root/agent-venv/bin/python -m pip install -r requirements.txt
 
-cp systemd/system/odoo-agent.service /etc/systemd/system/
+cp systemd/system/deploy-manager.service /etc/systemd/system/
 cp systemd/system/rclone-mount.service /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable odoo-agent.service --now
+systemctl enable deploy-manager.service --now
 systemctl enable rclone-mount.service --now
 
 rsync -avz postgres/ /etc/postgresql/*/main

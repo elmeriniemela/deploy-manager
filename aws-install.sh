@@ -21,8 +21,8 @@ cp -r nginx/* /etc/nginx/
 
 systemctl enable nginx --now
 
-cp systemd/system/odoo-agent.service /etc/systemd/system/
+cp systemd/system/deploy-manager.service /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable odoo-agent.service --now
+systemctl enable deploy-manager.service --now
 
 exit 0

@@ -145,7 +145,7 @@ def odoo_docker_run(uid, http_port, gevent_port):
         '--log-opt', 'loki-tls-insecure-skip-verify=true',
         '--log-opt', 'keep-file=true',
         '--log-opt', 'loki-batch-size=400',
-        '-v', f'/opt/odoo-agent/src:/mnt:ro',
+        '-v', f'/opt/deploy-manager/src:/mnt:ro',
         '-v', f'/var/run/postgresql/:/var/run/postgresql/',
         '-v', f'/etc/odoo/{uid}:/etc/odoo:ro',
         '-v', f'{uid}:/var/lib/odoo',
@@ -155,7 +155,7 @@ def odoo_docker_run(uid, http_port, gevent_port):
         '-p', f'[::1]:{gevent_port}:8072',
         '--restart', 'unless-stopped',
         '--name', uid,
-        '-t', '-d', 'ghcr.io/elmeriniemela/odoo-src:18.0',
+        '-t', '-d', 'ghcr.io/elmeriniemela/odoo-src:19.0',
     ]
 
 def list_backups(uid):

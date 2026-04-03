@@ -1,6 +1,6 @@
 FROM ubuntu:noble
 LABEL org.opencontainers.image.authors="niemela.elmeri@gmail.com"
-LABEL org.opencontainers.image.description="Odoo 18.0 image"
+LABEL org.opencontainers.image.description="Odoo 19.0 image"
 
 SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 
@@ -71,6 +71,13 @@ RUN apt-get update && \
         gsfonts \
         libjs-underscore \
         lsb-base \
+        python3-asn1crypto \
+        python3-cbor2 \
+        python3-greenlet \
+        python3-idna \
+        python3-lxml-html-clean \
+        python3-markupsafe \
+        python3-urllib3 \
         python3-babel \
         python3-chardet \
         python3-dateutil \
