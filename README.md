@@ -161,12 +161,18 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 #### Building the image
 * `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/deploy-manager`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
-* `sudo docker push ghcr.io/elmeriniemela/odoo-src:19.0`
+* `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
 
 
 #### Backup setup:
 * `crontab -e`
 * `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python ./agentd/backup.py`
+
+#### Clone modules
+* `cd /opt/deploy-manager/src`
+* `git clone -b 19.0 git@github.com:elmeriniemela/tabularium.git`
+* `git clone -b 19.0 --depth=1 --single-branch git@github.com:odoo/odoo.git`
+* `git clone -b 19.0 --depth=1 --single-branch git@github.com:OCA/OpenUpgrade.git`
 
 
 ## Other notes
