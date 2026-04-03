@@ -7,4 +7,3 @@ py3o.formats
 py3o.template
 yfinance
 markdownify
-packaging
