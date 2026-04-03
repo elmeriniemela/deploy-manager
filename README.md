@@ -128,12 +128,6 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `python agentd/api.py ssl_wildcard`
 * `systemctl restart nginx`
 
-#### Creating a personal github access token (READ only):
-* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
-* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
-    * https://github.com/settings/tokens/new
-* `docker login ghcr.io -u elmeriniemela`
-
 #### Promtail setup (TODO: deprecated, migrate to Alloy)
 * Promtail is an agent which ships the contents of local logs to a private Grafana Loki instance: https://grafana.com/docs/loki/latest/send-data/promtail/
 * Attach new server to the same private network as "monitoring" in hetzner cloud.
@@ -157,6 +151,12 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
     --restart unless-stopped \
     quay.io/prometheus/node-exporter:latest \
     --path.rootfs=/host
+
+#### Creating a personal github access token (READ only):
+* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
+    * https://github.com/settings/tokens/new
+* `docker login ghcr.io -u elmeriniemela`
 
 #### Building the image
 * `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/deploy-manager`
