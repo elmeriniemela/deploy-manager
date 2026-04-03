@@ -98,26 +98,22 @@ flowchart LR
 
 ## Installation
 
-#### Creating a personal github access token (READ only):
-* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
-* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
-* `docker login ghcr.io -u elmeriniemela`
-
 #### Prerequisite
 * `scp .gitconfig agent19.eniemela.fi:`
 * `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
 * `cat id_ecdsa.pub`
 * go to github / settings / SSH keys / Add 'Odoo 19.0 Hetzner Server key'
-* `mkdir -p /root/.config/rclone/`
-* `cp rclone.conf /root/.config/rclone/rclone.conf`
-* `vim /root/.config/rclone/rclone.conf`
-* `cp cloudflare.ini /root/cloudflare.ini`
-* `vim /root/cloudflare.ini`
+    * https://github.com/settings/keys
 
 #### Installation
 * `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/deploy-manager`
 * `cd /opt/deploy-manager`
 * `./ubuntu-install.sh`
+* `mkdir -p /root/.config/rclone/`
+* `cp rclone.conf /root/.config/rclone/rclone.conf`
+* `vim /root/.config/rclone/rclone.conf`
+* `cp cloudflare.ini /root/cloudflare.ini`
+* `vim /root/cloudflare.ini`
 * `systemctl edit docker.service`
 ```
 [Service]
@@ -131,6 +127,12 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `source /root/agent-venv/bin/activate`
 * `python agentd/api.py ssl_wildcard`
 * `systemctl restart nginx`
+
+#### Creating a personal github access token (READ only):
+* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
+    * https://github.com/settings/tokens/new
+* `docker login ghcr.io -u elmeriniemela`
 
 #### Promtail setup (TODO: deprecated, migrate to Alloy)
 * Promtail is an agent which ships the contents of local logs to a private Grafana Loki instance: https://grafana.com/docs/loki/latest/send-data/promtail/
