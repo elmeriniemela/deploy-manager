@@ -40,4 +40,9 @@ systemctl enable rclone-mount.service --now
 rsync -avz postgres/ /etc/postgresql/*/main
 rsync -avz nginx/ /etc/nginx
 
+mkdir -p /root/backups
+mkdir -p /root/.config/rclone/
+cp rclone.conf /root/.config/rclone/rclone.conf
+cp cloudflare.ini /root/cloudflare.ini
+
 exit 1

@@ -109,10 +109,7 @@ flowchart LR
 * `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/deploy-manager`
 * `cd /opt/deploy-manager`
 * `./ubuntu-install.sh`
-* `mkdir -p /root/.config/rclone/`
-* `cp rclone.conf /root/.config/rclone/rclone.conf`
 * `vim /root/.config/rclone/rclone.conf`
-* `cp cloudflare.ini /root/cloudflare.ini`
 * `vim /root/cloudflare.ini`
 * `systemctl edit docker.service`
 ```
