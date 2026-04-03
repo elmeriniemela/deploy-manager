@@ -207,7 +207,8 @@ def oca_migrate(src_uid, dst_uid, trigger, backup_file):
     proc = agentlib.execute([
         'docker', 'exec', dst_uid, 'odoo',
         '--update=all',
-        '--http-port=9999',
+        '--no-http',
+        '--workers=0',
         '--stop-after-init',
         '--load=base,web,openupgrade_framework',
         '--upgrade-path=/mnt/OpenUpgrade/openupgrade_scripts/scripts',
@@ -246,7 +247,16 @@ def upgrade(uid):
                 sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND usename = %s"), (uid, uid),
             )
 
-        proc = agentlib.execute(['docker', 'exec', uid, 'odoo', f'--update={joined_upgrade}', '--http-port=9999', '--stop-after-init'])
+        proc = agentlib.execute([
+            'docker',
+            'exec',
+            uid,
+            'odoo',
+            f'--update={joined_upgrade}',
+            '--no-http',
+            '--workers=0',
+            '--stop-after-init',
+        ])
         return (proc.stderr or '').strip() or (proc.stdout or '').strip()
     return None
 
@@ -405,7 +415,8 @@ def reset(uid):
         [
             'docker', 'exec', uid, 'odoo',
             '--init=base',
-            '--http-port=9999',
+            '--no-http',
+            '--workers=0',
             '--stop-after-init',
         ],
         ['docker', 'restart', uid],
@@ -444,7 +455,8 @@ def create(uid, hostnames, http_port, gevent_port, modules):
         [
             'docker', 'exec', uid, 'odoo',
             '--init=base',
-            '--http-port=9999',
+            '--no-http',
+            '--workers=0',
             '--stop-after-init',
         ],
         ['docker', 'restart', uid],
