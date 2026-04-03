@@ -204,6 +204,7 @@ def _restore(src_uid, dst_uid, trigger, backup_file):
 @agentlib.register
 def oca_migrate(src_uid, dst_uid, trigger, backup_file):
     _restore(src_uid, dst_uid, trigger, backup_file)
+    start(dst_uid)
     proc = agentlib.execute([
         'docker', 'exec', dst_uid, 'odoo',
         '--update=all',

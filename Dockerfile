@@ -42,7 +42,6 @@ RUN apt-get update && \
         python3-cryptography \
         python3-openpyxl \
         python3-requests-oauthlib \
-        python3-tinyrpc \
         python3-platformdirs \
         python3-jwcrypto \
         python3-numpy \
