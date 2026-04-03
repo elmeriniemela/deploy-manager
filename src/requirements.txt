@@ -8,3 +8,4 @@ py3o.template
 yfinance
 markdownify
 tinyrpc
+packaging
