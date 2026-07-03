@@ -169,6 +169,7 @@ def list_backups(uid):
             'fname': fname,
             'timestamp': fname_to_ts(fname).strftime('%Y-%m-%d %H:%M:%S'), # Odoo DEFAULT_SERVER_DATETIME_FORMAT
             'trigger': os.path.basename(os.path.dirname(path)),
+            'source': 'awsbucket:odoobackup1',
         })
     return backups
 
