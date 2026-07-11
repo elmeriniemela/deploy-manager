@@ -428,7 +428,7 @@ def create(uid, hostnames, http_port, gevent_port, modules):
 
     return config
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     functions = {}
     localdict = dict(locals())
     for name, obj in localdict.items():

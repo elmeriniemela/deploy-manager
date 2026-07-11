@@ -72,6 +72,18 @@ class PathTests(unittest.TestCase):
         self.assertEqual(modules, ["custom_addons"])
         save.assert_called_once_with("1a2b", conf)
 
+    def test_render_odoo_config_allows_modules_without_core_odoo_entry(self):
+        template = "addons={{ modules|join(',') }}\n"
+        modules = ["custom_addons"]
+
+        with patch("builtins.open", mock_open(read_data=template)):
+            with patch("agentd.agentlib.save_odoo_config") as save:
+                conf = agentlib.render_odoo_config("1a2b", "secret", modules)
+
+        self.assertEqual(conf, "addons=custom_addons\n")
+        self.assertEqual(modules, ["custom_addons"])
+        save.assert_called_once_with("1a2b", conf)
+
     def test_ensure_backups_mounted_raises_when_mount_is_missing(self):
         with patch("agentd.agentlib.backups_mounted", return_value=False):
             with self.assertRaisesRegex(AssertionError, "Backup dir not mounted"):
@@ -79,6 +91,12 @@ class PathTests(unittest.TestCase):
 
 
 class BackupListingTests(unittest.TestCase):
+    def test_backups_mounted_checks_expected_mountpoint(self):
+        with patch("agentd.agentlib.os.path.ismount", return_value=True) as ismount:
+            self.assertTrue(agentlib.backups_mounted())
+
+        ismount.assert_called_once_with("/root/backups")
+
     def test_list_backups_returns_empty_list_when_backup_mount_is_absent(self):
         with patch("agentd.agentlib.backups_mounted", return_value=False):
             self.assertEqual(agentlib.list_backups("1a2b"), [])
@@ -242,6 +260,27 @@ class InventoryTests(unittest.TestCase):
 
         self.assertEqual(modules, [])
         logger_exception.assert_called_once()
+
+
+class PostgresTests(unittest.TestCase):
+    def test_psql_opens_logging_connection_and_closes_resources(self):
+        connection = MagicMock()
+        cursor = MagicMock()
+        connection.cursor.return_value = cursor
+
+        with patch("agentd.agentlib.psycopg2.connect", return_value=connection) as connect:
+            with agentlib.psql(dbname="1a2b") as returned_cursor:
+                self.assertIs(returned_cursor, cursor)
+
+        connect.assert_called_once_with(
+            dbname="1a2b",
+            connection_factory=agentlib.LoggingConnection,
+        )
+        connection.initialize.assert_called_once_with(agentlib._logger)
+        connection.set_session.assert_called_once_with(autocommit=True)
+        connection.cursor.assert_called_once_with()
+        cursor.close.assert_called_once_with()
+        connection.close.assert_called_once_with()
 
 
 class CommandTests(unittest.TestCase):
@@ -423,5 +462,5 @@ class NginxMapTests(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     unittest.main()

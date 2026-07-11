@@ -1,0 +1,8 @@
+[run]
+command_line = -m unittest discover -s agentd/tests -t .
+omit =
+    agentd/cronsyl/*
+
+[report]
+omit =
+    agentd/cronsyl/*

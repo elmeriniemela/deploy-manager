@@ -528,6 +528,21 @@ class SelfUpgradeTests(unittest.TestCase):
             ],
         )
 
+    def test_self_upgrade_logs_error_when_restart_callback_never_recovers(self):
+        responses = [SimpleNamespace(text="not ready", status_code=503)] * 6
+
+        with patch("agentd.api.agentlib.validate"):
+            with patch("agentd.api.threading.Thread", ImmediateThread):
+                with patch("agentd.api.time.sleep"):
+                    with patch("agentd.api.upgrade", return_value=None):
+                        with patch("agentd.api.restart"):
+                            with patch("agentd.api.requests.post", side_effect=responses) as post:
+                                with patch("agentd.api._logger.error") as logger_error:
+                                    api.self_upgrade("1a2b", "https://callback.test")
+
+        self.assertEqual(post.call_count, 6)
+        logger_error.assert_called_once_with("Host not responding after restart.")
+
 
 class InstanceCommandTests(unittest.TestCase):
     def test_restart_start_and_stop_validate_uid_and_call_docker(self):
@@ -762,5 +777,5 @@ class UrlSyncTests(unittest.TestCase):
         execute.assert_called_once_with(["systemctl", "reload", "nginx"])
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     unittest.main()

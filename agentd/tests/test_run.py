@@ -5,14 +5,14 @@ from unittest.mock import patch
 from agentd import run
 
 
-def rpc_function():
+def rpc_function():  # pragma: no cover
     return "ok"
 
 
 rpc_function._rpc = True
 
 
-def hidden_function():
+def hidden_function():  # pragma: no cover
     return "hidden"
 
 
@@ -78,5 +78,5 @@ class MainTests(unittest.TestCase):
         self.assertEqual(result, 0)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     unittest.main()

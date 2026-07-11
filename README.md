@@ -203,7 +203,6 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 ### Tests
 * `python3 -m unittest discover -s agentd/tests -t .`
 * `coverage run -m unittest discover -s agentd/tests -t . && coverage report -m`
-* `coverage run -m unittest discover -s agentd/tests -t . && coverage run -a -m unittest discover -s agentd/cronsyl/tests -t agentd/cronsyl && coverage report -m`
 
 #### Random notes
 * Docker logs

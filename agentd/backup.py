@@ -40,7 +40,7 @@ def create_scheduled_backups(dryrun=False):
             if not dryrun:
                 os.remove(remove)
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser()
     parser.add_argument('--dryrun', '--dry-run', action='store_true')
     args = parser.parse_args()
