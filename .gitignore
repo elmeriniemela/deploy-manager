@@ -4,3 +4,4 @@
 src/
 !src/requirements.txt
 build
+.coverage

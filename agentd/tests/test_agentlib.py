@@ -1,7 +1,8 @@
 import datetime
 import subprocess
 import unittest
-from unittest.mock import call, mock_open, patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, call, mock_open, patch
 
 from agentd import agentlib
 
@@ -47,6 +48,35 @@ class PathTests(unittest.TestCase):
             "/root/backups/1a2b/daily", mode=0o700, exist_ok=True
         )
 
+    def test_save_odoo_config_creates_directory_and_writes_file(self):
+        output_handle = mock_open().return_value
+
+        with patch("agentd.agentlib.os.makedirs") as makedirs:
+            with patch("builtins.open", mock_open()) as opened:
+                opened.return_value = output_handle
+                agentlib.save_odoo_config("1a2b", "[options]\n")
+
+        makedirs.assert_called_once_with("/etc/odoo/1a2b", mode=0o755, exist_ok=True)
+        opened.assert_called_once_with("/etc/odoo/1a2b/odoo.conf", "w")
+        output_handle.write.assert_called_once_with("[options]\n")
+
+    def test_render_odoo_config_removes_core_odoo_module_before_rendering(self):
+        template = "db_user={{ uid }}\ndb_password={{ pw }}\naddons={{ modules|join(',') }}\n"
+        modules = ["odoo", "custom_addons"]
+
+        with patch("builtins.open", mock_open(read_data=template)):
+            with patch("agentd.agentlib.save_odoo_config") as save:
+                conf = agentlib.render_odoo_config("1a2b", "secret", modules)
+
+        self.assertEqual(conf, "db_user=1a2b\ndb_password=secret\naddons=custom_addons\n")
+        self.assertEqual(modules, ["custom_addons"])
+        save.assert_called_once_with("1a2b", conf)
+
+    def test_ensure_backups_mounted_raises_when_mount_is_missing(self):
+        with patch("agentd.agentlib.backups_mounted", return_value=False):
+            with self.assertRaisesRegex(AssertionError, "Backup dir not mounted"):
+                agentlib.ensure_backups_mounted()
+
 
 class BackupListingTests(unittest.TestCase):
     def test_list_backups_returns_empty_list_when_backup_mount_is_absent(self):
@@ -81,6 +111,137 @@ class BackupListingTests(unittest.TestCase):
                 },
             ],
         )
+
+
+class InventoryTests(unittest.TestCase):
+    def test_list_instances_skips_invalid_container_names_and_adds_inspect_data(self):
+        containers = [
+            {"Names": ["/1a2b"], "Id": "container-1"},
+            {"Names": ["/not-hex"], "Id": "container-2"},
+        ]
+        responses = [
+            SimpleNamespace(json=lambda: containers),
+            SimpleNamespace(json=lambda: {"State": {"Running": True}}),
+        ]
+
+        with patch("agentd.agentlib.requests.get", side_effect=responses) as get:
+            with patch("agentd.agentlib.list_backups", return_value=[{"fname": "dump.pgc"}]):
+                instances = agentlib.list_instances()
+
+        self.assertEqual(
+            get.call_args_list,
+            [
+                call(
+                    url="http://127.0.0.1:2375/containers/json",
+                    params={"all": True},
+                ),
+                call(url="http://127.0.0.1:2375/containers/container-1/json"),
+            ],
+        )
+        self.assertEqual(
+            instances,
+            [
+                {
+                    "uid": "1a2b",
+                    "docker": {
+                        "Names": ["/1a2b"],
+                        "Id": "container-1",
+                        "inspect": {"State": {"Running": True}},
+                    },
+                    "backups": [{"fname": "dump.pgc"}],
+                }
+            ],
+        )
+
+    def test_list_postgres_converts_cursor_rows_to_dicts(self):
+        cursor = MagicMock()
+        descriptions = [
+            [SimpleNamespace(name="datname")],
+            [SimpleNamespace(name="usename")],
+        ]
+
+        def execute(query):
+            cursor.description = descriptions.pop(0)
+
+        cursor.execute.side_effect = execute
+        cursor.fetchall.side_effect = [
+            [("postgres",), ("1a2b",)],
+            [("odoo",)],
+        ]
+
+        class PsqlContext:
+            def __enter__(self):
+                return cursor
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                return False
+
+        with patch("agentd.agentlib.psql", return_value=PsqlContext()):
+            result = agentlib.list_postgres()
+
+        self.assertEqual(
+            cursor.execute.call_args_list,
+            [
+                call("select * from pg_catalog.pg_database"),
+                call("select * from pg_catalog.pg_user"),
+            ],
+        )
+        self.assertEqual(
+            result,
+            {
+                "users": [{"usename": "odoo"}],
+                "databases": [{"datname": "postgres"}, {"datname": "1a2b"}],
+            },
+        )
+
+    def test_list_modules_collects_git_metadata(self):
+        execute_results = [
+            SimpleNamespace(stdout="abc123\n"),
+            SimpleNamespace(stdout="2026-07-11 12:00:00 +0000\n"),
+            SimpleNamespace(stdout="19.0\n"),
+            SimpleNamespace(stdout="git@example.test:repo.git\n"),
+        ]
+
+        with patch("agentd.agentlib.glob.glob", return_value=["src/custom_addons/.git"]):
+            with patch("agentd.agentlib.execute", side_effect=execute_results) as execute:
+                modules = agentlib.list_modules()
+
+        self.assertEqual(
+            modules,
+            [
+                {
+                    "name": "custom_addons",
+                    "commit": "abc123",
+                    "commit_date": "2026-07-11 12:00:00 +0000",
+                    "branch": "19.0",
+                    "url": "git@example.test:repo.git",
+                }
+            ],
+        )
+        self.assertEqual(
+            execute.call_args_list,
+            [
+                call("cd src/custom_addons && git rev-parse HEAD", shell=True),
+                call(
+                    "cd src/custom_addons && git log -1 --format=%cd --date=iso",
+                    shell=True,
+                ),
+                call(
+                    "cd src/custom_addons && git rev-parse --abbrev-ref HEAD",
+                    shell=True,
+                ),
+                call("cd src/custom_addons && git remote get-url origin", shell=True),
+            ],
+        )
+
+    def test_list_modules_skips_repositories_with_metadata_errors(self):
+        with patch("agentd.agentlib.glob.glob", return_value=["src/broken/.git"]):
+            with patch("agentd.agentlib.execute", side_effect=RuntimeError("boom")):
+                with patch("agentd.agentlib._logger.exception") as logger_exception:
+                    modules = agentlib.list_modules()
+
+        self.assertEqual(modules, [])
+        logger_exception.assert_called_once()
 
 
 class CommandTests(unittest.TestCase):
@@ -151,6 +312,58 @@ class ValidationTests(unittest.TestCase):
     def test_hostname_validation_rejects_numeric_tlds(self):
         with self.assertRaisesRegex(ValueError, "not all-numeric"):
             agentlib.is_valid_hostnames(["example.123"])
+
+    def test_hostname_validation_rejects_non_lists(self):
+        with self.assertRaisesRegex(AssertionError, "Hostnames should be a list"):
+            agentlib.is_valid_hostnames("example.test")
+
+    def test_hostname_validation_rejects_invalid_labels(self):
+        with self.assertRaisesRegex(ValueError, "Invalid characters"):
+            agentlib.is_valid_hostnames(["-bad.example"])
+
+    def test_hostname_validation_rejects_overlong_names(self):
+        hostname = ".".join(["a" * 63, "b" * 63, "c" * 63, "d" * 62, "example"])
+
+        with self.assertRaisesRegex(ValueError, "longer than 253"):
+            agentlib.is_valid_hostnames([hostname])
+
+    def test_module_validation_accepts_existing_module_directories(self):
+        with patch("agentd.agentlib.os.path.isdir", return_value=True) as isdir:
+            self.assertTrue(agentlib.is_valid_modules(["custom_addons"]))
+
+        isdir.assert_called_once_with("src/custom_addons")
+
+    def test_module_validation_rejects_non_lists_and_non_strings(self):
+        with self.assertRaisesRegex(AssertionError, "Modules should be a list"):
+            agentlib.is_valid_modules("custom_addons")
+
+        with self.assertRaisesRegex(AssertionError, "Module should be a string"):
+            agentlib.is_valid_modules([object()])
+
+    def test_module_validation_rejects_missing_directories(self):
+        with patch("agentd.agentlib.os.path.isdir", return_value=False):
+            with self.assertRaisesRegex(AssertionError, "Module directory does not exist"):
+                agentlib.is_valid_modules(["missing"])
+
+    def test_port_validation_accepts_ports_without_listeners(self):
+        sock = MagicMock()
+        sock.connect_ex.return_value = 111
+
+        with patch("agentd.agentlib.socket.socket", return_value=sock):
+            self.assertTrue(agentlib.is_valid_port(8069))
+
+        sock.connect_ex.assert_called_once_with(("127.0.0.1", 8069))
+        sock.close.assert_called_once_with()
+
+    def test_port_validation_rejects_non_integer_ports_and_open_ports(self):
+        with self.assertRaisesRegex(AssertionError, "Port should be an integer"):
+            agentlib.is_valid_port("8069")
+
+        sock = MagicMock()
+        sock.connect_ex.return_value = 0
+        with patch("agentd.agentlib.socket.socket", return_value=sock):
+            with self.assertRaisesRegex(ValueError, "already in use"):
+                agentlib.is_valid_port(8069)
 
 
 class NginxMapTests(unittest.TestCase):

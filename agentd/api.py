@@ -311,8 +311,8 @@ def remove(uid, http_port, gevent_port):
 
     sync_urls(hostnames=[], http_port=http_port, gevent_port=gevent_port)
 
-    existing_dbs = {v['datname'] for v in curstatus['pg_databases']}
-    existing_users = {v['usename'] for v in curstatus['pg_users']}
+    existing_dbs = {v['datname'] for v in curstatus['postgres']['databases']}
+    existing_users = {v['usename'] for v in curstatus['postgres']['users']}
     with agentlib.psql() as cur:
         if uid in existing_dbs:
             cur.execute(sql.SQL("DROP DATABASE {uid}").format(uid=sql.Identifier(uid)),)
