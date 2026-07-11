@@ -4,7 +4,7 @@ Description=deploy-manager
 [Service]
 User=root
 WorkingDirectory=/opt/deploy-manager
-ExecStart=/root/agent-venv/bin/python /opt/deploy-manager/agentd/run.py
+ExecStart=/root/agent-venv/bin/python -m agentd
 Restart=always
 RestartSec=1
 StartLimitInterval=120

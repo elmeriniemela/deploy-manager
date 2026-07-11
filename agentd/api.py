@@ -1,8 +1,8 @@
 import logging
 from psycopg2 import sql
 import secrets
-import agentlib
-import cronsyl
+
+from . import agentlib, cronsyl
 import requests
 import os
 import glob

@@ -1,11 +1,12 @@
-
-import socketserver
-import xmlrpc.server
 import argparse
-import pathlib
 import logging
+import pathlib
+import socketserver
 import sys
-import api
+import xmlrpc.server
+
+from . import api
+
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(name)s: %(message)s'
@@ -16,12 +17,12 @@ class AgentServer(socketserver.ThreadingMixIn, xmlrpc.server.SimpleXMLRPCServer)
     pass
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = argparse.ArgumentParser(description='Agent Server')
     parser.add_argument("--interface", dest="interface", type=str, default='localhost')
     parser.add_argument("--port", dest="port", type=int, default=8000)
     parser.add_argument("--logfile", dest="logfile", type=pathlib.Path)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     _logger = logging.getLogger("run")
 
@@ -41,7 +42,11 @@ if __name__ == "__main__":
         _logger.info(f'Available functions: {list(server.funcs.keys())}')
         try:
             server.serve_forever()
-            sys.exit(1) # If the loop ended, its considered a failure -> systemd will restart.
+            return 1 # If the loop ended, its considered a failure -> systemd will restart.
         except KeyboardInterrupt:
             _logger.info("Keyboard interrupt received, exiting.")
-            sys.exit(0)
+            return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

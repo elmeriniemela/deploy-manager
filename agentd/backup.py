@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
-import api
-import agentlib
+
+from . import api, agentlib
 import datetime
 import logging
 import glob

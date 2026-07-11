@@ -122,7 +122,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `systemctl restart postgresql`
 * `su - postgres -c "createuser -s root"`
 * `source /root/agent-venv/bin/activate`
-* `python agentd/api.py ssl_wildcard`
+* `python -m agentd.api ssl_wildcard`
 * `systemctl restart nginx`
 
 #### Promtail setup (TODO: deprecated, migrate to Alloy)
@@ -163,7 +163,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 
 #### Backup setup:
 * `crontab -e`
-* `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python ./agentd/backup.py`
+* `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python -m agentd.backup`
 
 #### Clone modules
 * `cd /opt/deploy-manager/src`
