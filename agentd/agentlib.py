@@ -198,7 +198,7 @@ def list_instances():
         })
     return instances
 
-def list_instances():
+def list_postgres():
     with psql() as cur:
         cur.execute("select * from pg_catalog.pg_database")
         pg_databases = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
