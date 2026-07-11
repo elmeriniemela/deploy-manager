@@ -198,6 +198,39 @@ def list_instances():
         })
     return instances
 
+def list_instances():
+    with agentlib.psql() as cur:
+        cur.execute("select * from pg_catalog.pg_database")
+        pg_databases = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
+        cur.execute("select * from pg_catalog.pg_user")
+        pg_users = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
+
+    return {
+        'users': pg_users,
+        'databases': pg_databases,
+    }
+
+def list_modules():
+    modules = []
+    for fname in glob.glob('src/**/.git'):
+        dirname = os.path.dirname(fname)
+        mod = {
+            'name': os.path.basename(dirname),
+        }
+        try:
+            mod['commit'] = agentlib.execute(f'cd {dirname} && git rev-parse HEAD', shell=True).stdout.strip()
+            mod['commit_date'] = agentlib.execute(f'cd {dirname} && git log -1 --format=%cd --date=iso', shell=True).stdout.strip()
+            mod['branch'] = agentlib.execute(f'cd {dirname} && git rev-parse --abbrev-ref HEAD', shell=True).stdout.strip()
+            mod['url'] = agentlib.execute(f'cd {dirname} && git remote get-url origin', shell=True).stdout.strip()
+        except Exception as error:
+            _logger.exception(error)
+            continue
+
+        modules.append(mod)
+
+    return modules
+
+
 @contextmanager
 def psql(dbname='postgres'):
     cur = conn = None

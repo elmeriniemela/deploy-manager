@@ -16,44 +16,17 @@ _logger = logging.getLogger(__name__)
 
 @agentlib.register
 def status():
-    instances = agentlib.list_instances()
-
-    with agentlib.psql() as cur:
-        cur.execute("select * from pg_catalog.pg_database")
-        pg_databases = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
-        cur.execute("select * from pg_catalog.pg_user")
-        pg_users = [{d.name: row[i] for i, d in enumerate(cur.description)} for row in cur.fetchall()]
-
-    modules = []
-    for fname in glob.glob('src/**/.git'):
-        dirname = os.path.dirname(fname)
-        mod = {
-            'name': os.path.basename(dirname),
-        }
-        try:
-            mod['commit'] = agentlib.execute(f'cd {dirname} && git rev-parse HEAD', shell=True).stdout.strip()
-            mod['commit_date'] = agentlib.execute(f'cd {dirname} && git log -1 --format=%cd --date=iso', shell=True).stdout.strip()
-            mod['branch'] = agentlib.execute(f'cd {dirname} && git rev-parse --abbrev-ref HEAD', shell=True).stdout.strip()
-            mod['url'] = agentlib.execute(f'cd {dirname} && git remote get-url origin', shell=True).stdout.strip()
-        except Exception as error:
-            _logger.exception(error)
-            continue
-
-        modules.append(mod)
-
-
-    status = {
-        'instances': instances,
-        'pg_users': pg_users,
-        'pg_databases': pg_databases,
+    return {
+        'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+        'instances': agentlib.list_instances(),
+        'postgres': agentlib.list_postgres(),
         'agent': {
             'commit': agentlib.execute(['git', 'rev-parse', 'HEAD']).stdout.strip(),
             'commit_date': agentlib.execute(['git', 'log', '-1', '--format=%cd', '--date=iso']).stdout.strip(),
         },
-        'modules': modules,
+        'modules': agentlib.list_modules(),
         'hardware': cronsyl.collect_hardware(('/',))
     }
-    return status
 
 @agentlib.register
 def agent_pull(checkout):
