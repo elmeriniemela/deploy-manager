@@ -2,6 +2,7 @@ import logging
 from psycopg2 import sql
 import secrets
 import agentlib
+import cronsyl
 import requests
 import os
 import glob
@@ -70,6 +71,7 @@ def status():
             'commit_date': agentlib.execute(['git', 'log', '-1', '--format=%cd', '--date=iso']).stdout.strip(),
         },
         'modules': modules,
+        'hardware': cronsyl.collect_hardware(('/',))
     }
     return status
 

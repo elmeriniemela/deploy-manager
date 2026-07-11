@@ -1,0 +1,3 @@
+[submodule "agentd/cronsyl"]
+	path = agentd/cronsyl
+	url = git@github.com:elmeriniemela/cronsyl.git

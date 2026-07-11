@@ -3,4 +3,3 @@ certbot
 certbot-nginx
 certbot-dns-cloudflare
 jinja2
-pytz==2025.2 # for US/Eastern timezone
