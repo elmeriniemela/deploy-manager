@@ -25,7 +25,7 @@ def create_scheduled_backups():
     else:
         trigger = 'daily'
 
-    insts = api.status()['instances']
+    insts = agentlib.list_instances()
     _logger.info(f"Creating scheduled backups for {len(insts)} instances.")
     for instance in insts:
         uid = instance['uid']
@@ -39,4 +39,3 @@ def create_scheduled_backups():
 
 if __name__ == "__main__":
     create_scheduled_backups()
-

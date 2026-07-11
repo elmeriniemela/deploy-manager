@@ -3,6 +3,7 @@ import subprocess
 import socket
 import psycopg2
 import re
+import requests
 from jinja2 import Template
 import os
 import glob
@@ -172,6 +173,30 @@ def list_backups(uid):
             'source': 'awsbucket:odoobackup1',
         })
     return backups
+
+def list_instances():
+    instances = []
+    docker_ps_a = requests.get(
+        url='http://127.0.0.1:2375/containers/json',
+        params={'all': True},
+    ).json()
+
+    for container in docker_ps_a:
+        uid = container['Names'][0].lstrip('/')
+        try:
+            validate(uid=uid)
+        except ValueError:
+            continue
+
+        cid = container['Id']
+        container['inspect'] = requests.get(url=f'http://127.0.0.1:2375/containers/{cid}/json').json()
+
+        instances.append({
+            'uid': uid,
+            'docker': container,
+            'backups': list_backups(uid),
+        })
+    return instances
 
 @contextmanager
 def psql(dbname='postgres'):

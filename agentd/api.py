@@ -16,27 +16,7 @@ _logger = logging.getLogger(__name__)
 
 @agentlib.register
 def status():
-    instances = []
-    docker_ps_a = requests.get(
-        url='http://127.0.0.1:2375/containers/json',
-        params={'all': True},
-    ).json()
-
-    for container in docker_ps_a:
-        uid = container['Names'][0].lstrip('/')
-        try:
-            agentlib.validate(uid=uid)
-        except ValueError:
-            continue
-
-        cid = container['Id']
-        container['inspect'] = requests.get(url=f'http://127.0.0.1:2375/containers/{cid}/json').json()
-
-        instances.append({
-            'uid': uid,
-            'docker': container,
-            'backups': agentlib.list_backups(uid),
-        })
+    instances = agentlib.list_instances()
 
     with agentlib.psql() as cur:
         cur.execute("select * from pg_catalog.pg_database")
