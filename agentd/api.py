@@ -91,7 +91,7 @@ def module_pull(module, checkout):
 def backup(uid, trigger='manual'):
     _logger.info(f"Starting {trigger} backup for {uid}")
     agentlib.validate(uid=uid)
-    fname = agentlib.ts_to_fname(datetime.datetime.utcnow())
+    fname = agentlib.ts_to_fname(datetime.datetime.now(datetime.timezone.utc))
     agentlib.execute(['pg_dump', '--no-owner', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid])
     agentlib.execute([
         'rclone', 'copy',

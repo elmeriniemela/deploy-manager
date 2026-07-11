@@ -200,6 +200,9 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `npx puppeteer browsers install chrome-headless-shell@131.0.6778.204`. NOTE: mmdc pins to a specific version, adapt if needed.
 * See AGENTS.md for usage.
 
+### Tests
+* `python3 -m unittest discover -s agentd/tests -t .`
+
 #### Random notes
 * Docker logs
 * Docker volumes: `ls /var/lib/docker/volumes`
