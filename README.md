@@ -87,8 +87,7 @@ flowchart LR
     * Custom modules https://github.com/elmeriniemela/tabularium
 * CI pipeline with Github actions:
     * Actions defined here at `src/tabularium/.github/workflows/test.yml`
-    * Depends on the docker container image available at https://github.com/elmeriniemela/odoo-ci
-    * Based on https://github.com/oca/oca-ci/pkgs/container/oca-ci%2Fpy3.10-odoo18.0
+    * Depends on the docker container image defined by this repository.
     * Documentation: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 * Monitoring
     * One monitoring server where multiple Odoo servers can send diagnostics and logging data.
