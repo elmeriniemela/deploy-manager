@@ -10,3 +10,4 @@ markdownify
 tinyrpc
 packaging
 pybitcoinkernel @ https://github.com/elmeriniemela/pybitcoinkernel/releases/download/v0.1.1/pybitcoinkernel-0.1.1-cp312-cp312-manylinux_2_34_x86_64.whl
+git+https://github.com/elmeriniemela/bitoplens.git
