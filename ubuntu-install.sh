@@ -44,5 +44,7 @@ mkdir -p /root/backups
 mkdir -p /root/.config/rclone/
 cp rclone.conf /root/.config/rclone/rclone.conf
 cp cloudflare.ini /root/cloudflare.ini
+cp sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
+systemctl reload ssh
 
-exit 1
+exit 0
