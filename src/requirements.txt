@@ -1,5 +1,4 @@
 git+https://github.com/OCA/openupgradelib.git@master#egg=openupgradelib
-btclib
 pyxirr
 numpy-financial
 genshi
@@ -7,7 +6,6 @@ py3o.formats
 py3o.template
 yfinance
 markdownify
-tinyrpc
 packaging
-pybitcoinkernel @ https://github.com/elmeriniemela/pybitcoinkernel/releases/download/v0.1.1/pybitcoinkernel-0.1.1-cp312-cp312-manylinux_2_34_x86_64.whl
+bitwalkit
 git+https://github.com/elmeriniemela/bitoplens.git
