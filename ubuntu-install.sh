@@ -3,7 +3,7 @@
 set -e
 
 apt update
-apt install postgresql nginx ca-certificates curl gnupg vim tmux patchutils fuse3 python3-pip python3-venv
+apt install postgresql nginx ca-certificates curl gnupg vim tmux patchutils fuse3 python3-pip python3-venv unattended-upgrades
 
 systemctl enable nginx --now
 systemctl enable postgresql --now
@@ -48,5 +48,9 @@ cp cloudflare.ini /root/cloudflare.ini
 chmod 0600 /root/cloudflare.ini
 cp sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
 systemctl reload ssh
+
+mkdir -p /etc/apt/apt.conf.d/
+cp apt/apt.conf.d/* /etc/apt/apt.conf.d/
+systemctl restart unattended-upgrades
 
 exit 0

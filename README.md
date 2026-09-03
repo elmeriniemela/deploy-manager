@@ -189,6 +189,10 @@ If you have existing plaintext backups in `odoobackup1` and wish to copy them in
 3. Once verified, the old unencrypted bucket `odoobackup1` can be kept as a fallback or purged:
    * `rclone purge awsbucket:odoobackup1`
 
+##### Decrypting a single file without rclone:
+To manually decrypt a downloaded file without rclone (using only Python and `pip install pynacl`):
+* `python3 docs/decrypt.py <encrypted_file> <decrypted_file> <password>`
+
 #### Clone modules
 * `cd /opt/deploy-manager/src`
 * `git clone -b 19.0 git@github.com:elmeriniemela/tabularium.git`
