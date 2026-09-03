@@ -1,7 +1,15 @@
-.psql_history
-.bash_history
-*.pyc
-src/
-!src/requirements.txt
-build
+# Nginx credentials
+.htpasswd
+nginx/.htpasswd
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 .coverage
+htmlcov/
+
+# Local build artifacts
+build/
+scratch/

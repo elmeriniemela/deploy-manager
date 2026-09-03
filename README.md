@@ -108,6 +108,8 @@ flowchart LR
 * `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/deploy-manager`
 * `cd /opt/deploy-manager`
 * `./ubuntu-install.sh`
+* `htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud`  # Use bcrypt (-B) with cost 12
+* `chmod 600 /etc/nginx/.htpasswd`
 * `vim /root/.config/rclone/rclone.conf`
 * `vim /root/cloudflare.ini`
 * `systemctl edit docker.service`

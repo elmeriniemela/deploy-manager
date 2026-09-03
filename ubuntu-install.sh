@@ -3,7 +3,7 @@
 set -e
 
 apt update
-apt install postgresql nginx ca-certificates curl gnupg vim tmux patchutils fuse3 python3-pip python3-venv unattended-upgrades
+apt install postgresql nginx ca-certificates curl gnupg vim tmux patchutils fuse3 python3-pip python3-venv unattended-upgrades apache2-utils
 
 systemctl enable nginx --now
 systemctl enable postgresql --now
