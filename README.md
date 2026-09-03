@@ -1,7 +1,7 @@
 # Deployment Manager for Odoo images
 
 ## Abstract
-This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone`, with scheduled retention cleanup.
+This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles client-side encrypted database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone` (with zero-knowledge `crypt` overlay), with scheduled retention cleanup.
 
 The XML-RPC API can be used from an Odoo instance to do self upgrades of Odoo source code.
 
@@ -17,7 +17,7 @@ flowchart LR
     FS["Filestore volumes"]
     DeployManager["Deployment Manager"]
     Backup["Backups"]
-    Rclone["rclone to S3 storage"]
+    Rclone["rclone crypt to S3 storage"]
     Monitoring["Prometheus Grafana Loki"]
     Metrics["System metrics"]
     Logs["Logging (promtail)"]
@@ -160,9 +160,34 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
 
 
-#### Backup setup:
-* `crontab -e`
-* `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python -m agentd.backup`
+#### Backup setup (Client-Side Encrypted S3 Backups):
+* All database dumps and Odoo filestores are encrypted client-side via rclone's `crypt` backend before upload to AWS S3.
+* Create a dedicated S3 bucket in AWS: `odoo-backups-crypt` (e.g. in `eu-north-1`).
+* Generate an obscured password for rclone config:
+  * `rclone obscure 'YourStrongSecretPassphrase'`
+* In `/root/.config/rclone/rclone.conf`, add the `[backup-crypt]` section:
+  ```ini
+  [backup-crypt]
+  type = crypt
+  remote = awsbucket:odoo-backups-crypt
+  filename_encryption = off
+  directory_name_encryption = false
+  password = <output from rclone obscure>
+  ```
+  *(Important: Back up this passphrase in an offline password manager. If lost, encrypted backups cannot be recovered!)*
+* Mount the encrypted remote:
+  * `systemctl restart rclone-mount.service`
+* Scheduled cron:
+  * `crontab -e`
+  * `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python -m agentd.backup`
+
+##### Copying existing unencrypted backups to the new encrypted bucket:
+If you have existing plaintext backups in `odoobackup1` and wish to copy them into the new encrypted bucket:
+1. Copy into the encrypted remote (reads unencrypted files, encrypts locally, writes to `odoo-backups-crypt`):
+   * `rclone copy awsbucket:odoobackup1 backup-crypt: --progress --transfers=16`
+2. Verify the files through `/root/backups` or `rclone ls backup-crypt:`
+3. Once verified, the old unencrypted bucket `odoobackup1` can be kept as a fallback or purged:
+   * `rclone purge awsbucket:odoobackup1`
 
 #### Clone modules
 * `cd /opt/deploy-manager/src`

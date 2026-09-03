@@ -207,7 +207,7 @@ class BackupTests(unittest.TestCase):
                         "--transfers=16",
                         "--ignore-existing",
                         "/var/lib/docker/volumes/1a2b/_data/filestore/1a2b",
-                        "awsbucket:odoobackup1/1a2b/filestore",
+                        "backup-crypt:1a2b/filestore",
                     ]
                 ),
                 call(
@@ -217,7 +217,7 @@ class BackupTests(unittest.TestCase):
                         "--transfers=16",
                         "--ignore-existing",
                         "/var/lib/docker/volumes/1a2b/_data/filestore/1a2b",
-                        "awsbucket:odoobackup1/1a2b/previous_filestore",
+                        "backup-crypt:1a2b/previous_filestore",
                     ]
                 ),
             ],
@@ -239,7 +239,7 @@ class BackupTests(unittest.TestCase):
                 "check",
                 "--one-way",
                 "/var/lib/docker/volumes/1a2b/_data/filestore/1a2b",
-                "awsbucket:odoobackup1/1a2b/filestore",
+                "backup-crypt:1a2b/filestore",
             ],
             check=False,
         )
@@ -285,7 +285,7 @@ class RestoreTests(unittest.TestCase):
                         "sync",
                         "--transfers=16",
                         "--ignore-existing",
-                        "awsbucket:odoobackup1/1a2b/previous_filestore",
+                        "backup-crypt:1a2b/previous_filestore",
                         "/var/lib/docker/volumes/2b3c/_data/filestore/2b3c",
                     ]
                 ),

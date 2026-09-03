@@ -119,17 +119,16 @@ class BackupListingTests(unittest.TestCase):
                     "fname": "2026-07-11T12-30-45.pgc",
                     "timestamp": "2026-07-11 12:30:45",
                     "trigger": "daily",
-                    "source": "awsbucket:odoobackup1",
+                    "source": "backup-crypt:",
                 },
                 {
                     "fname": "2026-07-10T01-02-03.pgc",
                     "timestamp": "2026-07-10 01:02:03",
                     "trigger": "manual",
-                    "source": "awsbucket:odoobackup1",
+                    "source": "backup-crypt:",
                 },
             ],
         )
-
 
 class InventoryTests(unittest.TestCase):
     def test_list_instances_skips_invalid_container_names_and_adds_inspect_data(self):

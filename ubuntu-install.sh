@@ -43,7 +43,9 @@ rsync -avz nginx/ /etc/nginx
 mkdir -p /root/backups
 mkdir -p /root/.config/rclone/
 cp rclone.conf /root/.config/rclone/rclone.conf
+chmod 0600 /root/.config/rclone/rclone.conf
 cp cloudflare.ini /root/cloudflare.ini
+chmod 0600 /root/cloudflare.ini
 cp sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
 systemctl reload ssh
 

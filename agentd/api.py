@@ -97,13 +97,13 @@ def backup(uid, trigger='manual'):
         'rclone', 'copy',
         '--transfers=16',
         '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
-        f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
+        f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'backup-crypt:{uid}/filestore'
     ])
     agentlib.execute([
         'rclone', 'sync',
         '--transfers=16',
         '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
-        f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/previous_filestore'
+        f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'backup-crypt:{uid}/previous_filestore'
     ])
     _logger.info(f"Backup done: {trigger} backup for {uid}")
     return {
@@ -117,7 +117,7 @@ def fshealth(uid):
         cmd=[
             'rclone', 'check',
             '--one-way',
-            f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'awsbucket:odoobackup1/{uid}/filestore'
+            f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'backup-crypt:{uid}/filestore'
         ],
         check=False,
     )
@@ -147,7 +147,7 @@ def _restore(src_uid, dst_uid, trigger, backup_file):
             'rclone', 'sync',
             '--transfers=16',
             '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
-            f'awsbucket:odoobackup1/{src_uid}/previous_filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'
+            f'backup-crypt:{src_uid}/previous_filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'
         ],
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
         ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, agentlib.dump_path(src_uid, trigger, backup_file)],
