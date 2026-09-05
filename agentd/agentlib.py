@@ -10,12 +10,14 @@ import glob
 from contextlib import contextmanager
 from psycopg2.extras import LoggingConnection
 import datetime
+import fcntl
+import tempfile
 
 _logger = logging.getLogger(__name__)
 
 def register(func):
     def wraps(*args, **kwargs): #XML-RPC doesn't have a concept of 'keyword arguments'
-        _logger.debug(f"Call {func.__name__}: {args=}, {kwargs=}")
+        _logger.debug("Call %s", func.__name__)
         return func(*args, **kwargs)
     wraps._rpc = True
     wraps.__name__ = func.__name__
@@ -79,7 +81,7 @@ def parse_version(s):
 
 def load_nginx_map(fname):
     mapping = {}
-    with open(f'/etc/nginx/conf.d/{fname}') as fp:
+    with open(os.path.join('/etc/nginx/conf.d', fname)) as fp:
         lines = fp.readlines()
 
     [(match, target)] = re.findall(r'map\s+(\$[\w]+)\s+(\$[\w]+)\s+{', lines[0])
@@ -95,8 +97,24 @@ def store_nginx_map(fname, match, target, mapping):
         template = Template(fp.read(), keep_trailing_newline=True)
 
     conf = template.render(mapping=mapping, match=match, target=target)
-    with open(f'/etc/nginx/conf.d/{fname}', 'w') as fp:
-        fp.write(conf)
+    path = os.path.join('/etc/nginx/conf.d', fname)
+    with tempfile.NamedTemporaryFile(mode='w', dir=os.path.dirname(path), delete=False) as fp:
+        try:
+            fp.write(conf)
+            fp.flush()
+            os.fchmod(fp.fileno(), 0o644)
+            os.replace(fp.name, path)
+        finally:
+            if os.path.exists(fp.name):
+                os.unlink(fp.name)
+
+
+@contextmanager
+def nginx_lock():
+    # A separate open per call also serializes threads in one agent process.
+    with open('/run/lock/odoo-nginx.lock', 'a') as fp:
+        fcntl.flock(fp, fcntl.LOCK_EX)
+        yield
 
 
 def render_odoo_config(uid, pw, modules):
@@ -146,7 +164,8 @@ def odoo_docker_run(uid, http_port, gevent_port):
         '--log-opt', 'loki-tls-insecure-skip-verify=true',
         '--log-opt', 'keep-file=true',
         '--log-opt', 'loki-batch-size=400',
-        '-v', f'/opt/deploy-manager/src:/mnt:ro',
+        '--label', 'odoo.version=19.0',
+        '-v', '/opt/odoo19/src:/mnt:ro',
         '-v', f'/var/run/postgresql/:/var/run/postgresql/',
         '-v', f'/etc/odoo/{uid}:/etc/odoo:ro',
         '-v', f'{uid}:/var/lib/odoo',
@@ -182,6 +201,8 @@ def list_instances():
     ).json()
 
     for container in docker_ps_a:
+        if container.get('Labels', {}).get('odoo.version') != '19.0':
+            continue
         uid = container['Names'][0].lstrip('/')
         try:
             validate(uid=uid)

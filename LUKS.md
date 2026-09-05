@@ -47,6 +47,8 @@ Hetzner Volume
             ├── odoo-config
             ├── rclone-config
             ├── rclone-cache
+            ├── nginx-temp
+            ├── tmp
             ├── secrets
             └── logs
                 ├── nginx
@@ -64,6 +66,7 @@ Bind-mount the encrypted directories to the conventional host paths:
 /srv/secure/rclone-cache    → /root/.cache/rclone
 /srv/secure/logs/nginx      → /var/log/nginx
 /srv/secure/logs/postgresql → /var/log/postgresql
+/srv/secure/nginx-temp      → /var/lib/nginx
 ```
 
 Store `cloudflare.ini` under `/srv/secure/secrets` and configure the deployment
@@ -80,6 +83,9 @@ The following remain on the unencrypted root filesystem:
 
 Do not store customer data in `/tmp` or `/var/tmp`. Disable persistent swap so
 that application memory cannot be written unencrypted to disk.
+Agent subprocesses use `/srv/secure/tmp`; PostgreSQL has a private subdirectory.
+Nginx buffers request bodies and upstream responses under `/var/lib/nginx`.
+Agent output goes to `/srv/secure/logs/deploy-manager19.log` with weekly rotation.
 
 ## One-time fresh-server bootstrap
 
@@ -188,6 +194,13 @@ Keep the one-time host bootstrap separate from a small release installer. The
 bootstrap invokes the release installer for Odoo 19. On a server that is
 already configured with LUKS, a future Odoo release runs only its release
 installer.
+
+The implementation uses `setup-appdata.sh` for volume provisioning,
+`appdata.sh` for shared mount checks, and `install-release.sh` for release setup.
+The first release setup leaves SSL sites disabled until the credentials and
+wildcard certificate exist. Follow README.md, rerun `install-release.sh`, then
+run `unlock-appdata`. Use `unlock-appdata --mount-only` to access storage without
+starting services and `unlock-appdata --check` for a noninteractive check.
 
 The 19.0 branch hardcodes the release values. It must:
 

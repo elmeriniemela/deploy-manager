@@ -91,6 +91,7 @@ def module_pull(module, checkout):
 def backup(uid, trigger='manual'):
     _logger.info(f"Starting {trigger} backup for {uid}")
     agentlib.validate(uid=uid)
+    agentlib.ensure_backups_mounted()
     fname = agentlib.ts_to_fname(datetime.datetime.now(datetime.timezone.utc))
     agentlib.execute(['pg_dump', '--no-owner', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid])
     agentlib.execute([
@@ -232,7 +233,7 @@ def ssl_wildcard():
     # https://www.bjornjohansen.com/wildcard-certificate-letsencrypt-cloudflare
     agentlib.execute([
         'certbot', 'certonly', '--dns-cloudflare',
-        '--dns-cloudflare-credentials', '/root/cloudflare.ini',
+        '--dns-cloudflare-credentials', '/srv/secure/secrets/cloudflare.ini',
         '-d', '*.eniemela.fi',
         '-d', 'eniemela.fi',
         '--expand',
@@ -245,7 +246,9 @@ def ssl_wildcard():
 @agentlib.register
 def ssl_renew():
     proc = agentlib.execute(['certbot', 'renew'])
-    agentlib.execute(['systemctl', 'reload', 'nginx'])
+    with agentlib.nginx_lock():
+        agentlib.execute(['nginx', '-t'])
+        agentlib.execute(['systemctl', 'reload', 'nginx'])
     return '\n'.join([proc.stderr or '', proc.stdout or '']).strip()
 
 @agentlib.register
@@ -343,17 +346,24 @@ def config(uid, conf):
 def sync_urls(hostnames, http_port, gevent_port):
     agentlib.validate(hostnames=hostnames) # ports are not checked, as the instance may be running and ports binded.
 
-    for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
-        match, target, mapping = agentlib.load_nginx_map(fname)
-        # Remove old ones
-        mapping = {d: p for d, p in mapping.items() if int(p.split(':')[-1]) != int(port)}
-        # Add new ones
-        for hostname in hostnames:
-            mapping[hostname] = f'127.0.0.1:{port}'
-
-        agentlib.store_nginx_map(fname, match, target, mapping)
-
-    agentlib.execute(['systemctl', 'reload', 'nginx'])
+    with agentlib.nginx_lock():
+        previous = {}
+        try:
+            for port, fname in [(gevent_port, 'gevent-ports.conf'), (http_port, 'http-ports.conf')]:
+                match, target, mapping = agentlib.load_nginx_map(fname)
+                previous[fname] = match, target, mapping
+                # Remove old ones
+                mapping = {d: p for d, p in mapping.items() if int(p.split(':')[-1]) != int(port)}
+                # Add new ones
+                for hostname in hostnames:
+                    mapping[hostname] = f'127.0.0.1:{port}'
+                agentlib.store_nginx_map(fname, match, target, mapping)
+            agentlib.execute(['nginx', '-t'])
+            agentlib.execute(['systemctl', 'reload', 'nginx'])
+        except Exception:
+            for fname, values in previous.items():
+                agentlib.store_nginx_map(fname, *values)
+            raise
 
 
 @agentlib.register

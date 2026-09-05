@@ -98,33 +98,76 @@ flowchart LR
 ## Installation
 
 #### Prerequisite
-* `scp .gitconfig agent19.eniemela.fi:`
+
+Use a fresh Ubuntu LTS server and a separate empty Hetzner Volume. Attach the
+volume without formatting or automatically mounting it. The installer refuses
+existing application data; this is not an in-place migration. See [LUKS.md](LUKS.md)
+for the storage layout, recovery precautions, and acceptance tests.
+
+Point `odoo19.eniemela.fi` to this server and allow TCP 9019 in the host and
+Hetzner firewalls. The agent is available at `https://odoo19.eniemela.fi:9019`
+through nginx basic authentication; its backend is loopback-only on port 8019.
+
+* `scp .gitconfig odoo19.eniemela.fi:`
 * `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
 * `cat id_ecdsa.pub`
 * go to github / settings / SSH keys / Add 'Odoo 19.0 Hetzner Server key'
     * https://github.com/settings/keys
 
 #### Installation
-* `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/deploy-manager`
-* `cd /opt/deploy-manager`
-* `./ubuntu-install.sh`
+
+Run the following as root. Formatting requests confirmation and a LUKS passphrase
+interactively; the passphrase is never stored on the server.
+
+* `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/odoo19`
+* `cd /opt/odoo19`
+* `lsblk -f` — identify the empty Hetzner Volume and its `/dev/disk/by-id/` path.
+* `bash ./ubuntu-install.sh /dev/disk/by-id/<hetzner-volume-id>`
+* Copy `/root/appdata-luks-header-<uuid>.img` to offline storage, verify the copy, then delete the server copy. Keep the passphrase separately.
 * `htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud`  # Use bcrypt (-B) with cost 12
-* `chmod 600 /etc/nginx/.htpasswd`
+* `chown root:www-data /etc/nginx/.htpasswd && chmod 640 /etc/nginx/.htpasswd`
 * `vim /root/.config/rclone/rclone.conf`
-* `vim /root/cloudflare.ini`
-* `systemctl edit docker.service`
-```
-[Service]
-ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/containerd/containerd.sock
-```
-* `systemctl daemon-reload`
-* `systemctl restart docker.service`
-* `systemctl restart postgresql`
-* `su - postgres -c "createuser -s root"`
-* `source /root/agent-venv/bin/activate`
+* `vim /srv/secure/secrets/cloudflare.ini`
+* `source /root/agent-venv19/bin/activate`
+* `export TMPDIR=/srv/secure/tmp`
 * `python -m agentd.api ssl_wildcard`
-* `systemctl restart nginx`
+* `bash ./install-release.sh` — validate and enable the SSL sites after creating the certificate.
+* `unlock-appdata`
+* `su - postgres -c "createuser -s root"` — first installation only.
+
+The bootstrap installs Docker's loopback API override automatically. Configure
+the Loki Docker logging plugin below before creating Odoo containers.
+
+After every reboot, Ubuntu and SSH are available but application services stay
+stopped. Run `sudo unlock-appdata` to unlock the volume, verify all encrypted bind
+mounts, and start PostgreSQL, Docker/containerd, nginx, rclone, and all installed
+agents. A wrong passphrase or missing mount prevents startup. Use
+`sudo unlock-appdata --mount-only` when you need to edit credentials before starting
+services, or `sudo unlock-appdata --check` to verify the mounted storage.
+
+The encrypted filesystem also contains nginx request-body temporary files,
+agent temporary files and rotating agent logs. Do not use unencrypted `/tmp` or
+`/var/tmp` for database dumps. Persistent swap is disabled. Native swap units or
+generators must be removed if the installer reports them.
+
+For a host-bootstrap rerun, stop `odoo-app.target` first. Reuse the same configured
+volume; the script preserves its filesystem and secrets and rejects conflicting
+fstab entries. Interrupted setup may leave runtime service masks; rerun the host
+bootstrap to finish configuring guards and remove the masks.
+
+#### Adding Odoo 20 later
+
+Create a 20.0 branch and replace release-specific 19 values with 20, including the
+service/logrotate filenames. Clone that branch to `/opt/odoo20`, unlock the host,
+and run only `bash ./install-release.sh` from the new clone. Configure DNS and
+TCP 9020 for `https://odoo20.eniemela.fi:9020`; the backend uses `127.0.0.1:8020`.
+Run `unlock-appdata` again to start newly installed agents.
+
+Each agent discovers and backs up only containers with its release's
+`odoo.version` label. UIDs and HTTP/gevent ports must be unique across the entire
+server, including stopped containers. Both releases share the PostgreSQL cluster,
+backup remote and nginx routing maps. Static files are served by the selected
+Odoo container. Updating one clone with `./update.sh` restarts only its agent.
 
 #### Promtail setup (TODO: deprecated, migrate to Alloy)
 * Promtail is an agent which ships the contents of local logs to a private Grafana Loki instance: https://grafana.com/docs/loki/latest/send-data/promtail/
@@ -157,7 +200,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
 * `docker login ghcr.io -u elmeriniemela`
 
 #### Building the image
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/deploy-manager`
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/odoo19`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
 * `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
 
@@ -181,7 +224,7 @@ ExecStart=/usr/bin/dockerd -H fd:// -H tcp://127.0.0.1:2375 --containerd=/run/co
   * `systemctl restart rclone-mount.service`
 * Scheduled cron:
   * `crontab -e`
-  * `30 00 * * * cd /opt/deploy-manager && /root/agent-venv/bin/python -m agentd.backup`
+  * `30 00 * * * /usr/local/sbin/unlock-appdata --check && cd /opt/odoo19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
 
 ##### Copying existing unencrypted backups to the new encrypted bucket:
 If you have existing plaintext backups in `odoobackup1` and wish to copy them into the new encrypted bucket:
@@ -196,7 +239,7 @@ To manually decrypt a downloaded file without rclone (using only Python and `pip
 * `python3 docs/decrypt.py <encrypted_file> <decrypted_file> <password>`
 
 #### Clone modules
-* `cd /opt/deploy-manager/src`
+* `cd /opt/odoo19/src`
 * `git clone -b 19.0 git@github.com:elmeriniemela/tabularium.git`
 * `git clone -b 19.0 --depth=1 --single-branch git@github.com:odoo/odoo.git`
 * `git clone -b 19.0 --depth=1 --single-branch git@github.com:OCA/OpenUpgrade.git`

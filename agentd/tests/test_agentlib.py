@@ -1,6 +1,8 @@
 import datetime
 import subprocess
 import unittest
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call, mock_open, patch
 
@@ -17,6 +19,11 @@ class RegisterTests(unittest.TestCase):
         self.assertTrue(wrapped._rpc)
         self.assertEqual(wrapped.__name__, "sample")
         self.assertEqual(wrapped("value", b="keyword"), ("value", "keyword"))
+
+    def test_register_does_not_log_argument_values(self):
+        with patch('agentd.agentlib._logger.debug') as debug:
+            agentlib.register(lambda conf: None)('db_password=secret')
+        self.assertNotIn('secret', str(debug.call_args_list))
 
 
 class VersionTests(unittest.TestCase):
@@ -133,8 +140,10 @@ class BackupListingTests(unittest.TestCase):
 class InventoryTests(unittest.TestCase):
     def test_list_instances_skips_invalid_container_names_and_adds_inspect_data(self):
         containers = [
-            {"Names": ["/1a2b"], "Id": "container-1"},
-            {"Names": ["/not-hex"], "Id": "container-2"},
+            {"Names": ["/1a2b"], "Id": "container-1", "Labels": {"odoo.version": "19.0"}},
+            {"Names": ["/not-hex"], "Id": "container-2", "Labels": {"odoo.version": "19.0"}},
+            {"Names": ["/2b3c"], "Id": "container-3", "Labels": {"odoo.version": "20.0"}},
+            {"Names": ["/3c4d"], "Id": "container-4"},
         ]
         responses = [
             SimpleNamespace(json=lambda: containers),
@@ -163,6 +172,7 @@ class InventoryTests(unittest.TestCase):
                     "docker": {
                         "Names": ["/1a2b"],
                         "Id": "container-1",
+                        "Labels": {"odoo.version": "19.0"},
                         "inspect": {"State": {"Running": True}},
                     },
                     "backups": [{"fname": "dump.pgc"}],
@@ -293,6 +303,8 @@ class CommandTests(unittest.TestCase):
         self.assertIn("127.0.0.1:8069:8069", cmd)
         self.assertIn("[::1]:8072:8072", cmd)
         self.assertEqual(cmd[-1], "ghcr.io/elmeriniemela/odoo-src:19.0")
+        self.assertEqual(cmd[cmd.index('--label') + 1], 'odoo.version=19.0')
+        self.assertIn('/opt/odoo19/src:/mnt:ro', cmd)
 
     def test_execute_wraps_subprocess_errors(self):
         error = subprocess.CalledProcessError(
@@ -435,30 +447,20 @@ class NginxMapTests(unittest.TestCase):
             "{%- endfor %}\n"
             "}\n"
         )
-        template_handle = mock_open(read_data=template).return_value
-        output_handle = mock_open().return_value
-
-        with patch("builtins.open") as opened:
-            opened.side_effect = [template_handle, output_handle]
-            agentlib.store_nginx_map(
-                "http-ports.conf",
-                "$http_host",
-                "$odoo_http_port",
-                {"example.test": "127.0.0.1:8069"},
-            )
-
-        self.assertEqual(
-            opened.call_args_list,
-            [
-                call("templates/nginxmap.conf"),
-                call("/etc/nginx/conf.d/http-ports.conf", "w"),
-            ],
-        )
-        output_handle.write.assert_called_once_with(
-            "map $http_host $odoo_http_port {\n"
-            "    example.test 127.0.0.1:8069;\n"
-            "}\n"
-        )
+        with tempfile.TemporaryDirectory() as directory:
+            # An absolute filename selects a disposable directory while still
+            # exercising the real tempfile, chmod and atomic replacement.
+            path = Path(directory) / 'http-ports.conf'
+            with patch("builtins.open", mock_open(read_data=template)):
+                agentlib.store_nginx_map(
+                    str(path), "$http_host", "$odoo_http_port",
+                    {"example.test": "127.0.0.1:8069"},
+                )
+            self.assertEqual(path.read_text(),
+                "map $http_host $odoo_http_port {\n"
+                "    example.test 127.0.0.1:8069;\n}\n")
+            self.assertEqual(path.stat().st_mode & 0o777, 0o644)
+            self.assertEqual(list(Path(directory).iterdir()), [path])
 
 
 if __name__ == "__main__": # pragma: no cover

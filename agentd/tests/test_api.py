@@ -1,6 +1,10 @@
 import datetime
 import unittest
-from contextlib import contextmanager
+import tempfile
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager, nullcontext
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
@@ -180,7 +184,8 @@ class AgentGitTests(unittest.TestCase):
 
 
 class BackupTests(unittest.TestCase):
-    def test_backup_dumps_database_and_syncs_filestore(self):
+    @patch('agentd.api.agentlib.ensure_backups_mounted')
+    def test_backup_dumps_database_and_syncs_filestore(self, ensure_mounted):
         with patch("agentd.api.agentlib.validate") as validate:
             with patch("agentd.api.agentlib.ts_to_fname", return_value="dump.pgc"):
                 with patch(
@@ -194,6 +199,7 @@ class BackupTests(unittest.TestCase):
                             result = api.backup("1a2b", trigger="manual")
 
         validate.assert_called_once_with(uid="1a2b")
+        ensure_mounted.assert_called_once_with()
         dump_path.assert_called_once_with("1a2b", "manual", "dump.pgc", makedirs=True)
         self.assertEqual(result, {"backups": [{"fname": "dump.pgc"}]})
         self.assertEqual(
@@ -222,6 +228,13 @@ class BackupTests(unittest.TestCase):
                 ),
             ],
         )
+
+    def test_backup_refuses_to_write_without_rclone_mount(self):
+        with patch('agentd.agentlib.backups_mounted', return_value=False):
+            with patch('agentd.agentlib.execute') as execute:
+                with self.assertRaises(AssertionError):
+                    api.backup('1a2b')
+        execute.assert_not_called()
 
     def test_fshealth_runs_one_way_rclone_check_and_returns_stderr(self):
         with patch("agentd.api.agentlib.validate") as validate:
@@ -454,12 +467,15 @@ class CertificateTests(unittest.TestCase):
         self.assertIn("-d", command)
         self.assertIn("*.eniemela.fi", command)
         self.assertIn("--dns-cloudflare-propagation-seconds=120", command)
+        self.assertIn('/srv/secure/secrets/cloudflare.ini', command)
 
-    def test_ssl_renew_reloads_nginx_and_returns_combined_output(self):
+    @patch('agentd.agentlib.nginx_lock', return_value=nullcontext())
+    def test_ssl_renew_reloads_nginx_and_returns_combined_output(self, lock):
         with patch(
             "agentd.api.agentlib.execute",
             side_effect=[
                 SimpleNamespace(stderr="renew stderr", stdout="renew stdout"),
+                SimpleNamespace(stderr="", stdout=""),
                 SimpleNamespace(stderr="", stdout=""),
             ],
         ) as execute:
@@ -470,6 +486,7 @@ class CertificateTests(unittest.TestCase):
             execute.call_args_list,
             [
                 call(["certbot", "renew"]),
+                call(["nginx", "-t"]),
                 call(["systemctl", "reload", "nginx"]),
             ],
         )
@@ -724,6 +741,9 @@ class InstanceCommandTests(unittest.TestCase):
 
 
 class UrlSyncTests(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch('agentd.agentlib.nginx_lock', return_value=nullcontext()))
+
     def test_sync_urls_replaces_existing_port_mappings_and_reloads_nginx(self):
         load_results = [
             (
@@ -774,7 +794,62 @@ class UrlSyncTests(unittest.TestCase):
                 ),
             ],
         )
-        execute.assert_called_once_with(["systemctl", "reload", "nginx"])
+        self.assertEqual(execute.call_args_list, [call(['nginx', '-t']), call(['systemctl', 'reload', 'nginx'])])
+
+    def test_sync_urls_restores_both_maps_when_validation_fails(self):
+        original = ('$host', '$target', {'keep.example': '127.0.0.1:7000'})
+        with patch('agentd.agentlib.load_nginx_map', return_value=original):
+            with patch('agentd.agentlib.store_nginx_map') as store:
+                with patch('agentd.agentlib.execute', side_effect=RuntimeError('invalid nginx')) as execute:
+                    with self.assertRaises(RuntimeError):
+                        api.sync_urls(['new.example'], 8001, 9001)
+        self.assertEqual(store.call_args_list[-2:], [
+            call('gevent-ports.conf', *original), call('http-ports.conf', *original),
+        ])
+        execute.assert_called_once_with(['nginx', '-t'])
+
+
+class ConcurrentUrlSyncTests(unittest.TestCase):
+    def test_two_agents_preserve_each_others_routes(self):
+        maps = {'http-ports.conf': {}, 'gevent-ports.conf': {}}
+        barrier = threading.Barrier(2)
+
+        def load(fname):
+            snapshot = maps[fname].copy()
+            # Widen the read/write window that previously lost another route.
+            time.sleep(0.02)
+            return '$host', '$target', snapshot
+
+        def store(fname, match, target, mapping):
+            maps[fname] = mapping
+
+        def sync(hostname, http, gevent):
+            barrier.wait(timeout=5)
+            api.sync_urls([hostname], http, gevent)
+
+        real_open = open
+        with tempfile.TemporaryDirectory() as directory:
+            def lock_open(path, *args, **kwargs):
+                self.assertEqual(path, '/run/lock/odoo-nginx.lock')
+                return real_open(f'{directory}/nginx.lock', *args, **kwargs)
+
+            with patch('builtins.open', side_effect=lock_open):
+                with patch('agentd.agentlib.load_nginx_map', side_effect=load):
+                    with patch('agentd.agentlib.store_nginx_map', side_effect=store):
+                        with patch('agentd.agentlib.execute'):
+                            with ThreadPoolExecutor(max_workers=2) as executor:
+                                jobs = [
+                                    executor.submit(sync, 'v19.example', 8101, 9101),
+                                    executor.submit(sync, 'v20.example', 8102, 9102),
+                                ]
+                                for job in jobs:
+                                    job.result(timeout=5)
+        self.assertEqual(maps['http-ports.conf'], {
+            'v19.example': '127.0.0.1:8101', 'v20.example': '127.0.0.1:8102',
+        })
+        self.assertEqual(maps['gevent-ports.conf'], {
+            'v19.example': '127.0.0.1:9101', 'v20.example': '127.0.0.1:9102',
+        })
 
 
 if __name__ == "__main__": # pragma: no cover

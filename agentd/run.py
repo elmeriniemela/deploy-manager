@@ -19,8 +19,8 @@ class AgentServer(socketserver.ThreadingMixIn, xmlrpc.server.SimpleXMLRPCServer)
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Agent Server')
-    parser.add_argument("--interface", dest="interface", type=str, default='localhost')
-    parser.add_argument("--port", dest="port", type=int, default=8000)
+    parser.add_argument("--interface", dest="interface", type=str, default='127.0.0.1')
+    parser.add_argument("--port", dest="port", type=int, default=8019)
     parser.add_argument("--logfile", dest="logfile", type=pathlib.Path)
     args = parser.parse_args(argv)
 

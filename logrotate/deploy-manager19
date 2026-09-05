@@ -1,0 +1,8 @@
+/srv/secure/logs/deploy-manager19.log {
+    weekly
+    rotate 4
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
