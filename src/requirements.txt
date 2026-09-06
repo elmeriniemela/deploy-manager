@@ -1,4 +1,4 @@
 git+https://github.com/OCA/openupgradelib.git@a6134fa5d056f10f12aa6206a022dbdc5c0540b8#egg=openupgradelib
 yfinance==1.7.0
-bitwalkit==0.1.0
+bitwalkit==0.2.0
 bitoplens==0.1.0
