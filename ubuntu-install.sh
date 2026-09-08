@@ -3,34 +3,26 @@
 set -euxo pipefail
 cd /opt/19
 
-# One-time Ubuntu 26.04 host install. Create and open the LUKS volume and add its
-# UUID to /etc/crypttab first by following README.md.
+# Ubuntu 26.04 host install. Create and open the LUKS volume, add its UUID to
+# /etc/crypttab, and run ubuntu-install-once.sh first by following README.md.
 systemctl mask swap.target
-echo '/dev/mapper/appdata /srv/secure ext4 noauto 0 2' >> /etc/fstab
-echo '/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/docker /var/lib/docker none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/containerd /var/lib/containerd none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/odoo-config /etc/odoo none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0' >> /etc/fstab
 systemctl daemon-reload
 
 install -d /srv/secure
-mount /srv/secure
+systemctl start srv-secure.mount
 install -d /srv/secure/postgresql /srv/secure/docker /srv/secure/containerd /srv/secure/odoo-config
 install -d /srv/secure/logs/nginx /srv/secure/logs/postgresql /srv/secure/nginx-temp
 install -d -m 0700 /srv/secure/rclone-config /srv/secure/rclone-cache /srv/secure/backups /srv/secure/secrets
 install -d -m 0711 /srv/secure/tmp
 install -d /var/lib/postgresql /var/lib/docker /var/lib/containerd /etc/odoo
 install -d /var/log/nginx /var/log/postgresql /var/lib/nginx
-mount /var/lib/postgresql
-mount /var/lib/docker
-mount /var/lib/containerd
-mount /etc/odoo
-mount /var/log/nginx
-mount /var/log/postgresql
-mount /var/lib/nginx
+systemctl start var-lib-postgresql.mount
+systemctl start var-lib-docker.mount
+systemctl start var-lib-containerd.mount
+systemctl start etc-odoo.mount
+systemctl start var-log-nginx.mount
+systemctl start var-log-postgresql.mount
+systemctl start var-lib-nginx.mount
 
 systemctl mask --runtime postgresql.service postgresql@.service docker.service docker.socket containerd.service nginx.service rclone-mount.service
 
@@ -83,8 +75,10 @@ install -m 0644 nginx/sites-enabled/00_agent19.conf /etc/nginx/sites-available/0
 install -m 0644 nginx/sites-enabled/odoo.conf /etc/nginx/sites-available/odoo.conf
 
 install -d -m 0700 /srv/secure/backups
-install -m 0600 rclone.conf /srv/secure/rclone-config/rclone.conf
-install -D -m 0600 cloudflare.ini /srv/secure/secrets/cloudflare.ini
+cp --update=none rclone.conf /srv/secure/rclone-config/rclone.conf
+chmod 0600 /srv/secure/rclone-config/rclone.conf
+cp --update=none cloudflare.ini /srv/secure/secrets/cloudflare.ini
+chmod 0600 /srv/secure/secrets/cloudflare.ini
 install -m 0644 sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
 systemctl reload ssh
 

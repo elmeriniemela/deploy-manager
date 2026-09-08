@@ -149,18 +149,20 @@ Append the UUID entry to `/etc/crypttab`:
 echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 ```
 
-Run the one-time installer after the mapper is open and the crypttab entry is in
-place:
+Append the fixed `/etc/fstab` entries once, then run the host installer. The host
+installer can be rerun after a partial failure; do not rerun
+`ubuntu-install-once.sh`.
 
 ```bash
+bash ./ubuntu-install-once.sh
 bash ./ubuntu-install.sh
 ```
 
-The installer is intentionally a one-time, linear list of package and file
-installation commands. It disables swap, appends the fixed `/etc/fstab` entries,
-creates and mounts the encrypted directories, and installs the host services.
-Read it before running it; it has no device selection, formatting logic, loops,
-or conditional branches, and must not be run twice.
+Both files are linear command lists without loops or conditional branches.
+`ubuntu-install-once.sh` only appends the fixed mount configuration.
+`ubuntu-install.sh` disables swap, creates and mounts the encrypted directories,
+and installs the host services. It uses idempotent systemd mount starts and does
+not overwrite configured rclone or Cloudflare credentials when rerun.
 
 Finish the configuration and start the application services:
 
