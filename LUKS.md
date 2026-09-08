@@ -9,6 +9,12 @@ The exact first-install commands are in [README.md](README.md). They are kept in
 the documentation because choosing and formatting a block device should be a
 deliberate operator action, not hidden in a Bash script.
 
+The initial format may use a verified kernel device name such as `/dev/sdb`.
+Identify it by matching the `MODEL`, `SERIAL`, and `SIZE` from `lsblk` with the
+Hetzner Console. Once LUKS exists, store its stable
+`/dev/disk/by-uuid/<luks-uuid>` path as `HETZNER_VOL` in root's `.bashrc`; do not
+persist `/dev/sdb`, because kernel device names can change.
+
 ## Storage layout
 
 ```text
@@ -98,11 +104,48 @@ cryptsetup close appdata
 
 ## Recovery material
 
+The passphrase does not encrypt the data directly. It unlocks a protected copy
+of the random volume-encryption key stored in a LUKS keyslot:
+
+```text
+Passphrase
+    ↓ unlocks
+LUKS header and keyslot
+    ↓ reveals
+Volume-encryption key
+    ↓ decrypts
+Data on the volume
+```
+
+`cryptsetup luksHeaderBackup` creates a binary copy of the LUKS metadata and
+keyslot area. This includes the UUID, encryption parameters, keyslot information,
+and encrypted copies of the volume key. It does not contain the passphrase in
+plaintext, application files, or a complete image of the volume.
+
+If the live header or its keyslots are damaged, the encrypted data may still be
+physically present but impossible to decrypt. A header backup can restore the
+information needed to unlock it:
+
+```bash
+cryptsetup luksHeaderRestore "$HETZNER_VOL" --header-backup-file "/offline/path/appdata-luks-header-<uuid>.img"
+```
+
+Do not run `luksHeaderRestore` during normal operation. It overwrites the current
+header; during recovery, preserve the damaged current header before attempting a
+restore. A header backup also does not replace ordinary application-data backups.
+
 The first-install procedure creates
 `/root/appdata-luks-header-<uuid>.img`. Copy it to offline storage, verify the
 copy, and delete the server copy. Keep the header backup and passphrase
-separately. Losing both usable LUKS headers and their backup makes the data
-unrecoverable.
+separately. The header backup alone cannot decrypt the volume, but the backup
+together with a passphrase valid when it was created can—even if that passphrase
+was later changed or removed from the live header. Create a new header backup
+after intentional keyslot changes, and securely destroy old copies if a removed
+passphrase must no longer work. Losing both the usable live header and every
+header backup makes the data unrecoverable.
+
+See the official [`luksHeaderBackup` manual](https://man7.org/linux/man-pages/man8/cryptsetup-luksheaderbackup.8.html)
+for the recovery and security warnings.
 
 The rclone `crypt` password also needs a separate offline backup. Recovering the
 LUKS volume does not recover a lost backup-encryption password.

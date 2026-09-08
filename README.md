@@ -118,47 +118,51 @@ through nginx basic authentication; its backend is loopback-only on port 8019.
 
 #### Installation
 
-Run the following as root. Set the stable device path once in root's `.bashrc`;
-later login shells can then use the same `HETZNER_VOL` variable. `luksFormat`
-and `mkfs.ext4` destroy data on that device, so confirm the `lsblk` and `wipefs`
-output before continuing. LUKS asks for the passphrase interactively and does
-not store it on the server.
+Run the following as root. Identify the volume by matching its `MODEL`, `SERIAL`,
+and `SIZE` with the Hetzner Console. Use its `/dev/sdX` name only for the initial
+format. Afterward, save the stable LUKS UUID path in root's `.bashrc` for later
+login shells. `luksFormat` and `mkfs.ext4` destroy data on the selected device,
+so confirm the `lsblk`, `findmnt`, and `wipefs` output before continuing. LUKS
+asks for the passphrase interactively and does not store it on the server.
 
 ```bash
 git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/19
 cd /opt/19
 apt update
 apt install -y cryptsetup
-lsblk -f
-echo 'export HETZNER_VOL="/dev/disk/by-id/<hetzner-volume-id>"' >> /root/.bashrc
-source /root/.bashrc
+lsblk -So NAME,MODEL,SERIAL,SIZE,TYPE
+cryptsetup luksFormat --type luks2 /dev/sdX
+LUKS_UUID="$(cryptsetup luksUUID /dev/sdX)" && echo "$LUKS_UUID"
+udevadm trigger --action=change --name-match=/dev/sdX
+udevadm settle
+echo "export HETZNER_VOL=\"/dev/disk/by-uuid/$LUKS_UUID\"" >> /root/.bashrc
+export HETZNER_VOL="/dev/disk/by-uuid/$LUKS_UUID"
 readlink -e "$HETZNER_VOL"
-wipefs --no-act "$HETZNER_VOL"
-cryptsetup luksFormat --type luks2 "$HETZNER_VOL"
 cryptsetup open "$HETZNER_VOL" appdata
 mkfs.ext4 /dev/mapper/appdata
-cryptsetup luksUUID "$HETZNER_VOL"
-cryptsetup luksHeaderBackup "$HETZNER_VOL" --header-backup-file /root/appdata-luks-header-<uuid>.img
+cryptsetup luksHeaderBackup "$HETZNER_VOL" --header-backup-file "/root/appdata-luks-header-$LUKS_UUID.img"
 ```
 
-Add the UUID printed above to `/etc/crypttab`:
+Append the UUID entry to `/etc/crypttab`:
 
-```text
-appdata UUID=<uuid> none luks,noauto
+```bash
+echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 ```
 
-Disable swap (`swapoff --all`), remove or comment its entries in `/etc/fstab`,
-and run `systemctl mask swap.target`. Then add these entries to `/etc/fstab`:
+Disable swap, comment its active `/etc/fstab` entries, and append the encrypted
+filesystem and bind mounts. These append commands are for the one-time fresh-host
+setup; do not run them twice.
 
-```fstab
-/dev/mapper/appdata /srv/secure ext4 noauto 0 2
-/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0
-/srv/secure/docker /var/lib/docker none noauto,bind 0 0
-/srv/secure/containerd /var/lib/containerd none noauto,bind 0 0
-/srv/secure/odoo-config /etc/odoo none noauto,bind 0 0
-/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0
-/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0
-/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0
+```bash
+echo '/dev/mapper/appdata /srv/secure ext4 noauto 0 2' >> /etc/fstab
+echo '/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/docker /var/lib/docker none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/containerd /var/lib/containerd none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/odoo-config /etc/odoo none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0' >> /etc/fstab
+systemctl daemon-reload
 ```
 
 Create and mount the encrypted directories before installing the services:
