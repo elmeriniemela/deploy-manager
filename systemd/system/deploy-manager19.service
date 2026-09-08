@@ -1,7 +1,7 @@
 [Unit]
 Description=deploy-manager Odoo 19
-Requires=docker.service postgresql.service rclone-mount.service
-After=docker.service postgresql.service rclone-mount.service
+Requires=docker.service postgresql@16-main.service rclone-mount.service
+After=docker.service postgresql@16-main.service rclone-mount.service
 PartOf=odoo-app.target
 StartLimitIntervalSec=120
 StartLimitBurst=30
@@ -9,7 +9,6 @@ StartLimitBurst=30
 [Service]
 User=root
 WorkingDirectory=/opt/odoo19
-ExecStartPre=/usr/local/sbin/unlock-appdata --check
 ExecStart=/root/agent-venv19/bin/python -m agentd --interface 127.0.0.1 --port 8019
 Restart=always
 RestartSec=1

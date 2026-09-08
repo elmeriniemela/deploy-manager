@@ -1,7 +1,7 @@
 # Deployment Manager for Odoo images
 
 ## Abstract
-This project automates self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, host bootstrap scripts (Docker/PostgreSQL/nginx/systemd), and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles client-side encrypted database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone` (with zero-knowledge `crypt` overlay), with scheduled retention cleanup.
+This project supports self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, a short one-time Ubuntu setup command list, and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles client-side encrypted database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone` (with zero-knowledge `crypt` overlay), with scheduled retention cleanup.
 
 The XML-RPC API can be used from an Odoo instance to do self upgrades of Odoo source code.
 
@@ -99,10 +99,11 @@ flowchart LR
 
 #### Prerequisite
 
-Use a fresh Ubuntu LTS server and a separate empty Hetzner Volume. Attach the
-volume without formatting or automatically mounting it. The installer refuses
-existing application data; this is not an in-place migration. See [LUKS.md](LUKS.md)
-for the storage layout, recovery precautions, and acceptance tests.
+Use a fresh Ubuntu 24.04 LTS server and a separate empty Hetzner Volume. Attach the
+volume without formatting or automatically mounting it. This is not an in-place
+migration. The commands below format the selected device, so inspect it carefully
+first. See [LUKS.md](LUKS.md)
+for the storage layout and recovery precautions.
 
 Point `odoo19.eniemela.fi` to this server and allow TCP 9019 in the host and
 Hetzner firewalls. The agent is available at `https://odoo19.eniemela.fi:9019`
@@ -116,52 +117,139 @@ through nginx basic authentication; its backend is loopback-only on port 8019.
 
 #### Installation
 
-Run the following as root. Formatting requests confirmation and a LUKS passphrase
-interactively; the passphrase is never stored on the server.
+Run the following as root. Replace the device path everywhere. `luksFormat` and
+`mkfs.ext4` destroy data on that device, so confirm the `lsblk` and `wipefs`
+output before continuing. LUKS asks for the passphrase interactively and does
+not store it on the server.
 
-* `git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/odoo19`
-* `cd /opt/odoo19`
-* `lsblk -f` — identify the empty Hetzner Volume and its `/dev/disk/by-id/` path.
-* `bash ./ubuntu-install.sh /dev/disk/by-id/<hetzner-volume-id>`
-* Copy `/root/appdata-luks-header-<uuid>.img` to offline storage, verify the copy, then delete the server copy. Keep the passphrase separately.
-* `htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud`  # Use bcrypt (-B) with cost 12
-* `chown root:www-data /etc/nginx/.htpasswd && chmod 640 /etc/nginx/.htpasswd`
-* `vim /root/.config/rclone/rclone.conf`
-* `vim /srv/secure/secrets/cloudflare.ini`
-* `source /root/agent-venv19/bin/activate`
-* `export TMPDIR=/srv/secure/tmp`
-* `python -m agentd.api ssl_wildcard`
-* `bash ./install-release.sh` — validate and enable the SSL sites after creating the certificate.
-* `unlock-appdata`
-* `su - postgres -c "createuser -s root"` — first installation only.
+```bash
+git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/odoo19
+cd /opt/odoo19
+apt update
+apt install -y cryptsetup
+lsblk -f
+readlink -e /dev/disk/by-id/<hetzner-volume-id>
+wipefs --no-act /dev/disk/by-id/<hetzner-volume-id>
+cryptsetup luksFormat --type luks2 /dev/disk/by-id/<hetzner-volume-id>
+cryptsetup open /dev/disk/by-id/<hetzner-volume-id> appdata
+mkfs.ext4 /dev/mapper/appdata
+cryptsetup luksUUID /dev/disk/by-id/<hetzner-volume-id>
+cryptsetup luksHeaderBackup /dev/disk/by-id/<hetzner-volume-id> --header-backup-file /root/appdata-luks-header-<uuid>.img
+```
+
+Add the UUID printed above to `/etc/crypttab`:
+
+```text
+appdata UUID=<uuid> none luks,noauto
+```
+
+Disable swap (`swapoff --all`), remove or comment its entries in `/etc/fstab`,
+and run `systemctl mask swap.target`. Then add these entries to `/etc/fstab`:
+
+```fstab
+/dev/mapper/appdata /srv/secure ext4 noauto 0 2
+/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0
+/srv/secure/docker /var/lib/docker none noauto,bind 0 0
+/srv/secure/containerd /var/lib/containerd none noauto,bind 0 0
+/srv/secure/odoo-config /etc/odoo none noauto,bind 0 0
+/srv/secure/rclone-config /root/.config/rclone none noauto,bind 0 0
+/srv/secure/rclone-cache /root/.cache/rclone none noauto,bind 0 0
+/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0
+/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0
+/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0
+```
+
+Create and mount the encrypted directories before installing the services:
+
+```bash
+install -d /srv/secure
+mount /srv/secure
+install -d /srv/secure/postgresql /srv/secure/docker /srv/secure/containerd /srv/secure/odoo-config
+install -d /srv/secure/rclone-config /srv/secure/rclone-cache /srv/secure/logs/nginx /srv/secure/logs/postgresql /srv/secure/nginx-temp
+install -d -m 0700 /srv/secure/secrets
+install -d -m 0711 /srv/secure/tmp
+install -d /var/lib/postgresql /var/lib/docker /var/lib/containerd /etc/odoo
+install -d /root/.config/rclone /root/.cache/rclone /var/log/nginx /var/log/postgresql /var/lib/nginx
+mount /var/lib/postgresql
+mount /var/lib/docker
+mount /var/lib/containerd
+mount /etc/odoo
+mount /root/.config/rclone
+mount /root/.cache/rclone
+mount /var/log/nginx
+mount /var/log/postgresql
+mount /var/lib/nginx
+bash ./ubuntu-install.sh
+```
+
+The installer is intentionally a one-time, linear list of package and file
+installation commands. Read it before running it; it has no device selection,
+formatting logic, loops, or conditional branches.
+
+Finish the configuration and start the application services:
+
+```bash
+htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud
+chown root:www-data /etc/nginx/.htpasswd
+chmod 640 /etc/nginx/.htpasswd
+vim /root/.config/rclone/rclone.conf
+vim /srv/secure/secrets/cloudflare.ini
+export TMPDIR=/srv/secure/tmp
+/root/agent-venv19/bin/python -m agentd.api ssl_wildcard
+ln -s /etc/nginx/sites-available/00_agent19.conf /etc/nginx/sites-enabled/00_agent19.conf
+ln -s /etc/nginx/sites-available/odoo.conf /etc/nginx/sites-enabled/odoo.conf
+nginx -t
+systemctl start odoo-app.target
+su - postgres -c "createuser -s root"
+```
+
+Copy `/root/appdata-luks-header-<uuid>.img` to offline storage, verify the copy,
+then delete the server copy. Keep the passphrase separately.
 
 The bootstrap installs Docker's loopback API override automatically. Configure
 the Loki Docker logging plugin below before creating Odoo containers.
 
 After every reboot, Ubuntu and SSH are available but application services stay
-stopped. Run `sudo unlock-appdata` to unlock the volume, verify all encrypted bind
-mounts, and start PostgreSQL, Docker/containerd, nginx, rclone, and all installed
-agents. A wrong passphrase or missing mount prevents startup. Use
-`sudo unlock-appdata --mount-only` when you need to edit credentials before starting
-services, or `sudo unlock-appdata --check` to verify the mounted storage.
+stopped. Unlock, mount, and start them with the same ordinary commands:
+
+```bash
+cryptsetup open /dev/disk/by-id/<hetzner-volume-id> appdata
+mount /srv/secure
+mount /var/lib/postgresql
+mount /var/lib/docker
+mount /var/lib/containerd
+mount /etc/odoo
+mount /root/.config/rclone
+mount /root/.cache/rclone
+mount /var/log/nginx
+mount /var/log/postgresql
+mount /var/lib/nginx
+nginx -t
+systemctl start odoo-app.target
+```
+
+The systemd drop-ins installed by `ubuntu-install.sh` prevent protected services
+from starting while any encrypted mount unit is inactive. Use `findmnt /srv/secure`
+and `findmnt /var/lib/docker` to inspect mounts, and `systemctl status
+odoo-app.target` to inspect the services.
 
 The encrypted filesystem also contains nginx request-body temporary files,
 agent temporary files and rotating agent logs. Do not use unencrypted `/tmp` or
-`/var/tmp` for database dumps. Persistent swap is disabled. Native swap units or
-generators must be removed if the installer reports them.
+`/var/tmp` for database dumps. Persistent swap is disabled. Confirm that
+`swapon --show` is empty before starting the application services.
 
-For a host-bootstrap rerun, stop `odoo-app.target` first. Reuse the same configured
-volume; the script preserves its filesystem and secrets and rejects conflicting
-fstab entries. Interrupted setup may leave runtime service masks; rerun the host
-bootstrap to finish configuring guards and remove the masks.
+Do not rerun the one-time installer as an update mechanism. Use `./update.sh` for
+this release and make later host configuration changes as explicit commands.
 
 #### Adding Odoo 20 later
 
 Create a 20.0 branch and replace release-specific 19 values with 20, including the
-service/logrotate filenames. Clone that branch to `/opt/odoo20`, unlock the host,
-and run only `bash ./install-release.sh` from the new clone. Configure DNS and
-TCP 9020 for `https://odoo20.eniemela.fi:9020`; the backend uses `127.0.0.1:8020`.
-Run `unlock-appdata` again to start newly installed agents.
+service/logrotate filenames. Clone that branch to `/opt/odoo20`, create its Python
+virtualenv, install its systemd unit, appdata drop-in, logrotate file, and nginx
+site with the corresponding individual commands from `ubuntu-install.sh`. Configure
+DNS and TCP 9020 for `https://odoo20.eniemela.fi:9020`; the backend uses
+`127.0.0.1:8020`. Validate nginx, enable the new agent, and start it through
+`odoo-app.target`.
 
 Each agent discovers and backs up only containers with its release's
 `odoo.version` label. UIDs and HTTP/gevent ports must be unique across the entire
@@ -224,7 +312,7 @@ Odoo container. Updating one clone with `./update.sh` restarts only its agent.
   * `systemctl restart rclone-mount.service`
 * Scheduled cron:
   * `crontab -e`
-  * `30 00 * * * /usr/local/sbin/unlock-appdata --check && cd /opt/odoo19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
+  * `30 00 * * * mountpoint -q /srv/secure && cd /opt/odoo19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
 
 ##### Copying existing unencrypted backups to the new encrypted bucket:
 If you have existing plaintext backups in `odoobackup1` and wish to copy them into the new encrypted bucket:

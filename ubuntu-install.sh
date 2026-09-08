@@ -1,87 +1,74 @@
 #!/bin/bash
 
-set -euo pipefail
-cd "$(dirname "$0")"
-source ./appdata.sh
+set -euxo pipefail
+cd /opt/odoo19
 
-[[ $EUID == 0 && $(pwd -P) == /opt/odoo19 ]] || fail 'Run as root from /opt/odoo19.'
-for service in postgresql docker containerd nginx rclone-mount odoo-app.target; do
-    if systemctl is-active --quiet "$service"; then
-        fail "$service is active. Stop application services before running the host bootstrap."
-    fi
-done
-bash ./setup-appdata.sh "$@"
+# One-time Ubuntu 24.04 host install. Prepare and mount the encrypted storage
+# first by following README.md.
+systemctl mask --runtime postgresql.service postgresql@.service docker.service docker.socket containerd.service nginx.service rclone-mount.service
 
-# Package post-install scripts must not start services before configuration.
-# Leave these runtime masks in place on failure; a successful rerun removes them.
-services=(postgresql.service postgresql@.service docker.service docker.socket containerd.service nginx.service rclone-mount.service)
-systemctl mask --runtime "${services[@]}"
-# Install guards before packages: even a reboot during setup must fail closed.
-for service in "${services[@]}" deploy-manager19.service; do
-    mkdir -p "/etc/systemd/system/$service.d"
-    appdata_guard "$service" > "/etc/systemd/system/$service.d/appdata.conf"
-done
+install -d /etc/systemd/system/postgresql@.service.d
+install -d /etc/systemd/system/docker.service.d
+install -d /etc/systemd/system/docker.socket.d
+install -d /etc/systemd/system/containerd.service.d
+install -d /etc/systemd/system/nginx.service.d
+install -d /etc/systemd/system/rclone-mount.service.d
+install -d /etc/systemd/system/deploy-manager19.service.d
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/postgresql@.service.d/appdata-mounts.conf
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/docker.service.d/appdata-mounts.conf
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/docker.socket.d/appdata-mounts.conf
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/containerd.service.d/appdata-mounts.conf
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/nginx.service.d/appdata-mounts.conf
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/rclone-mount.service.d/appdata-mounts.conf
+install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/deploy-manager19.service.d/appdata-mounts.conf
 systemctl daemon-reload
+
+apt update
 apt install -y postgresql nginx ca-certificates curl gnupg vim tmux patchutils fuse3 python3-pip python3-venv unattended-upgrades apache2-utils rsync rclone
 
-# https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+# Docker: https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the repository to Apt sources:
-tee /etc/apt/sources.list.d/docker.sources <<EOF
-Types: deb
-URIs: https://download.docker.com/linux/ubuntu
-Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
-Components: stable
-Architectures: $(dpkg --print-architecture)
-Signed-By: /etc/apt/keyrings/docker.asc
-EOF
-
+install -m 0644 apt/docker.sources /etc/apt/sources.list.d/docker.sources
 apt update
 apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-install -m 0644 systemd/system/odoo-app.target systemd/system/rclone-mount.service /etc/systemd/system/
+install -m 0644 systemd/system/odoo-app.target systemd/system/rclone-mount.service systemd/system/deploy-manager19.service /etc/systemd/system/
 install -D -m 0644 systemd/system/docker.service.d/override.conf /etc/systemd/system/docker.service.d/override.conf
+install -m 0644 systemd/system/docker.service.d/postgresql.conf /etc/systemd/system/docker.service.d/postgresql.conf
+install -m 0644 systemd/system/postgresql@.service.d/tmp.conf /etc/systemd/system/postgresql@.service.d/tmp.conf
+install -D -m 0644 logrotate/deploy-manager19 /etc/logrotate.d/deploy-manager19
 
-# PostgreSQL needs a writable temporary directory owned by its own user.
 install -d -o postgres -g postgres -m 0700 /srv/secure/tmp/postgresql
-printf '[Service]\nEnvironment=TMPDIR=/srv/secure/tmp/postgresql\n' > /etc/systemd/system/postgresql@.service.d/tmp.conf
-
-# Debian/Ubuntu cluster generators can enable PostgreSQL independently of the
-# umbrella service. Start clusters explicitly from our manual target instead.
-for pgconf in /etc/postgresql/*/main; do
-    pgversion=${pgconf#/etc/postgresql/}
-    pgversion=${pgversion%/main}
-    rsync -av postgres/ "$pgconf/"
-    printf 'manual\n' > "$pgconf/start.conf"
-    systemctl add-wants odoo-app.target "postgresql@$pgversion-main.service"
-    mkdir -p /etc/systemd/system/docker.service.d
-    printf '[Unit]\nRequires=postgresql@%s-main.service\nAfter=postgresql@%s-main.service\n' "$pgversion" "$pgversion" > /etc/systemd/system/docker.service.d/postgresql.conf
-done
+rsync -av postgres/ /etc/postgresql/16/main/
 chown postgres:adm /var/log/postgresql
 chmod 0750 /var/log/postgresql
+
 chown www-data:adm /var/log/nginx
 chmod 0755 /var/log/nginx
 chown www-data:adm /var/lib/nginx
 chmod 0755 /var/lib/nginx
-
-# Copy shared routing maps only on first install. A second release must never
-# overwrite hostnames that the running agents have already registered.
-rsync -av --ignore-existing nginx/conf.d/ /etc/nginx/conf.d/
+rsync -av nginx/conf.d/ /etc/nginx/conf.d/
 install -m 0644 nginx/nginx.conf /etc/nginx/nginx.conf
+install -d /etc/nginx/sites-available
+install -m 0644 nginx/sites-enabled/00_agent19.conf /etc/nginx/sites-available/00_agent19.conf
+install -m 0644 nginx/sites-enabled/odoo.conf /etc/nginx/sites-available/odoo.conf
+
 install -d -m 0700 /root/backups
-[[ -f /root/.config/rclone/rclone.conf ]] || install -m 0600 rclone.conf /root/.config/rclone/rclone.conf
-[[ -f /srv/secure/secrets/cloudflare.ini ]] || install -m 0600 cloudflare.ini /srv/secure/secrets/cloudflare.ini
-cp sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
+install -D -m 0600 rclone.conf /root/.config/rclone/rclone.conf
+install -D -m 0600 cloudflare.ini /srv/secure/secrets/cloudflare.ini
+install -m 0644 sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
 systemctl reload ssh
 
-mkdir -p /etc/apt/apt.conf.d/
-cp apt/apt.conf.d/* /etc/apt/apt.conf.d/
-systemctl restart unattended-upgrades
+install -d /etc/apt/apt.conf.d
+install -m 0644 apt/apt.conf.d/20auto-upgrades apt/apt.conf.d/50unattended-upgrades /etc/apt/apt.conf.d/
 
-systemctl unmask --runtime "${services[@]}"
-systemctl disable "${services[@]}"
+python3 -m venv /root/agent-venv19
+/root/agent-venv19/bin/python -m pip install -r requirements.txt
+
+systemctl unmask --runtime postgresql.service postgresql@.service docker.service docker.socket containerd.service nginx.service rclone-mount.service
+systemctl disable postgresql.service postgresql@16-main.service docker.service docker.socket containerd.service nginx.service rclone-mount.service deploy-manager19.service
+systemctl enable deploy-manager19.service
 systemctl daemon-reload
-bash ./install-release.sh
+systemctl restart unattended-upgrades

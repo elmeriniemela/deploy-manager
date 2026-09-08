@@ -1,4 +1,4 @@
 [Unit]
-Description=Odoo application services (start after unlock-appdata)
-Requires=postgresql.service containerd.service docker.service nginx.service rclone-mount.service
-After=postgresql.service containerd.service docker.service nginx.service rclone-mount.service
+Description=Odoo application services
+Requires=postgresql@16-main.service containerd.service docker.service nginx.service rclone-mount.service
+After=postgresql@16-main.service containerd.service docker.service nginx.service rclone-mount.service
