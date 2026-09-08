@@ -37,7 +37,7 @@ direct service start fails while the encrypted storage is not mounted.
 
 Rclone reads its configuration from `/srv/secure/rclone-config/rclone.conf`,
 uses `/srv/secure/rclone-cache`, and mounts the decrypted backup view at
-`/srv/secure/backups`. No rclone path is under `/root`.
+`/srv/secure/backups`.
 
 Do not store database dumps in `/tmp` or `/var/tmp`. The agent uses
 `/srv/secure/tmp`, PostgreSQL uses `/srv/secure/tmp/postgresql`, and nginx uses
@@ -46,10 +46,11 @@ application memory is not written to unencrypted disk.
 
 ## Normal boot procedure
 
-Replace the device path with the stable path recorded during installation:
+Root's `.bashrc` defines `HETZNER_VOL` as the stable device path recorded during
+installation. Use it when opening the volume:
 
 ```bash
-cryptsetup open /dev/disk/by-id/<hetzner-volume-id> appdata
+cryptsetup open "$HETZNER_VOL" appdata
 mount /srv/secure
 mount /var/lib/postgresql
 mount /var/lib/docker

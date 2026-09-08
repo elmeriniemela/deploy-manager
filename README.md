@@ -117,8 +117,9 @@ through nginx basic authentication; its backend is loopback-only on port 8019.
 
 #### Installation
 
-Run the following as root. Replace the device path everywhere. `luksFormat` and
-`mkfs.ext4` destroy data on that device, so confirm the `lsblk` and `wipefs`
+Run the following as root. Set the stable device path once in root's `.bashrc`;
+later login shells can then use the same `HETZNER_VOL` variable. `luksFormat`
+and `mkfs.ext4` destroy data on that device, so confirm the `lsblk` and `wipefs`
 output before continuing. LUKS asks for the passphrase interactively and does
 not store it on the server.
 
@@ -128,13 +129,15 @@ cd /opt/odoo19
 apt update
 apt install -y cryptsetup
 lsblk -f
-readlink -e /dev/disk/by-id/<hetzner-volume-id>
-wipefs --no-act /dev/disk/by-id/<hetzner-volume-id>
-cryptsetup luksFormat --type luks2 /dev/disk/by-id/<hetzner-volume-id>
-cryptsetup open /dev/disk/by-id/<hetzner-volume-id> appdata
+echo 'export HETZNER_VOL="/dev/disk/by-id/<hetzner-volume-id>"' >> /root/.bashrc
+source /root/.bashrc
+readlink -e "$HETZNER_VOL"
+wipefs --no-act "$HETZNER_VOL"
+cryptsetup luksFormat --type luks2 "$HETZNER_VOL"
+cryptsetup open "$HETZNER_VOL" appdata
 mkfs.ext4 /dev/mapper/appdata
-cryptsetup luksUUID /dev/disk/by-id/<hetzner-volume-id>
-cryptsetup luksHeaderBackup /dev/disk/by-id/<hetzner-volume-id> --header-backup-file /root/appdata-luks-header-<uuid>.img
+cryptsetup luksUUID "$HETZNER_VOL"
+cryptsetup luksHeaderBackup "$HETZNER_VOL" --header-backup-file /root/appdata-luks-header-<uuid>.img
 ```
 
 Add the UUID printed above to `/etc/crypttab`:
@@ -209,7 +212,7 @@ After every reboot, Ubuntu and SSH are available but application services stay
 stopped. Unlock, mount, and start them with the same ordinary commands:
 
 ```bash
-cryptsetup open /dev/disk/by-id/<hetzner-volume-id> appdata
+cryptsetup open "$HETZNER_VOL" appdata
 mount /srv/secure
 mount /var/lib/postgresql
 mount /var/lib/docker
