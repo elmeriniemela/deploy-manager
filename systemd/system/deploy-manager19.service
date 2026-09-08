@@ -1,7 +1,7 @@
 [Unit]
 Description=deploy-manager Odoo 19
-Requires=docker.service postgresql@16-main.service rclone-mount.service
-After=docker.service postgresql@16-main.service rclone-mount.service
+Requires=docker.service postgresql@18-main.service rclone-mount.service
+After=docker.service postgresql@18-main.service rclone-mount.service
 PartOf=odoo-app.target
 StartLimitIntervalSec=120
 StartLimitBurst=30

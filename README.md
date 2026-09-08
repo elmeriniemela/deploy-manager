@@ -99,7 +99,7 @@ flowchart LR
 
 #### Prerequisite
 
-Use a fresh Ubuntu 24.04 LTS server and a separate empty Hetzner Volume. Attach the
+Use a fresh Ubuntu 26.04 LTS server and a separate empty Hetzner Volume. Attach the
 volume without formatting or automatically mounting it. This is not an in-place
 migration. The commands below format the selected device, so inspect it carefully
 first. See [LUKS.md](LUKS.md)

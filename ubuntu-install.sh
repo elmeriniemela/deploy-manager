@@ -3,7 +3,7 @@
 set -euxo pipefail
 cd /opt/19
 
-# One-time Ubuntu 24.04 host install. Create and open the LUKS volume and add its
+# One-time Ubuntu 26.04 host install. Create and open the LUKS volume and add its
 # UUID to /etc/crypttab first by following README.md.
 systemctl mask swap.target
 echo '/dev/mapper/appdata /srv/secure ext4 noauto 0 2' >> /etc/fstab
@@ -68,7 +68,7 @@ install -m 0644 systemd/system/postgresql@.service.d/tmp.conf /etc/systemd/syste
 install -D -m 0644 logrotate/deploy-manager19 /etc/logrotate.d/deploy-manager19
 
 install -d -o postgres -g postgres -m 0700 /srv/secure/tmp/postgresql
-rsync -av postgres/ /etc/postgresql/16/main/
+rsync -av postgres/ /etc/postgresql/18/main/
 chown postgres:adm /var/log/postgresql
 chmod 0750 /var/log/postgresql
 
@@ -95,7 +95,7 @@ python3 -m venv /root/agent-venv19
 /root/agent-venv19/bin/python -m pip install -r requirements.txt
 
 systemctl unmask --runtime postgresql.service postgresql@.service docker.service docker.socket containerd.service nginx.service rclone-mount.service
-systemctl disable postgresql.service postgresql@16-main.service docker.service docker.socket containerd.service nginx.service rclone-mount.service deploy-manager19.service
+systemctl disable postgresql.service postgresql@18-main.service docker.service docker.socket containerd.service nginx.service rclone-mount.service deploy-manager19.service
 systemctl enable deploy-manager19.service
 systemctl daemon-reload
 systemctl restart unattended-upgrades
