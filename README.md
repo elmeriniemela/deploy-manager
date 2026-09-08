@@ -149,46 +149,18 @@ Append the UUID entry to `/etc/crypttab`:
 echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 ```
 
-Disable swap, comment its active `/etc/fstab` entries, and append the encrypted
-filesystem and bind mounts. These append commands are for the one-time fresh-host
-setup; do not run them twice.
+Run the one-time installer after the mapper is open and the crypttab entry is in
+place:
 
 ```bash
-echo '/dev/mapper/appdata /srv/secure ext4 noauto 0 2' >> /etc/fstab
-echo '/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/docker /var/lib/docker none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/containerd /var/lib/containerd none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/odoo-config /etc/odoo none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0' >> /etc/fstab
-echo '/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0' >> /etc/fstab
-systemctl daemon-reload
-```
-
-Create and mount the encrypted directories before installing the services:
-
-```bash
-install -d /srv/secure
-mount /srv/secure
-install -d /srv/secure/postgresql /srv/secure/docker /srv/secure/containerd /srv/secure/odoo-config
-install -d /srv/secure/logs/nginx /srv/secure/logs/postgresql /srv/secure/nginx-temp
-install -d -m 0700 /srv/secure/rclone-config /srv/secure/rclone-cache /srv/secure/backups /srv/secure/secrets
-install -d -m 0711 /srv/secure/tmp
-install -d /var/lib/postgresql /var/lib/docker /var/lib/containerd /etc/odoo
-install -d /var/log/nginx /var/log/postgresql /var/lib/nginx
-mount /var/lib/postgresql
-mount /var/lib/docker
-mount /var/lib/containerd
-mount /etc/odoo
-mount /var/log/nginx
-mount /var/log/postgresql
-mount /var/lib/nginx
 bash ./ubuntu-install.sh
 ```
 
 The installer is intentionally a one-time, linear list of package and file
-installation commands. Read it before running it; it has no device selection,
-formatting logic, loops, or conditional branches.
+installation commands. It disables swap, appends the fixed `/etc/fstab` entries,
+creates and mounts the encrypted directories, and installs the host services.
+Read it before running it; it has no device selection, formatting logic, loops,
+or conditional branches, and must not be run twice.
 
 Finish the configuration and start the application services:
 

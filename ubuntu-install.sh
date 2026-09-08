@@ -3,8 +3,37 @@
 set -euxo pipefail
 cd /opt/19
 
-# One-time Ubuntu 24.04 host install. Prepare and mount the encrypted storage
-# first by following README.md.
+# One-time Ubuntu 24.04 host install. Create and open the LUKS volume and add its
+# UUID to /etc/crypttab first by following README.md.
+swapoff --all
+sed -i '/^[^#].*[[:space:]]swap[[:space:]]/s/^/# Disabled for LUKS appdata: /' /etc/fstab
+systemctl mask swap.target
+echo '/dev/mapper/appdata /srv/secure ext4 noauto 0 2' >> /etc/fstab
+echo '/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/docker /var/lib/docker none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/containerd /var/lib/containerd none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/odoo-config /etc/odoo none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0' >> /etc/fstab
+echo '/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0' >> /etc/fstab
+systemctl daemon-reload
+
+install -d /srv/secure
+mount /srv/secure
+install -d /srv/secure/postgresql /srv/secure/docker /srv/secure/containerd /srv/secure/odoo-config
+install -d /srv/secure/logs/nginx /srv/secure/logs/postgresql /srv/secure/nginx-temp
+install -d -m 0700 /srv/secure/rclone-config /srv/secure/rclone-cache /srv/secure/backups /srv/secure/secrets
+install -d -m 0711 /srv/secure/tmp
+install -d /var/lib/postgresql /var/lib/docker /var/lib/containerd /etc/odoo
+install -d /var/log/nginx /var/log/postgresql /var/lib/nginx
+mount /var/lib/postgresql
+mount /var/lib/docker
+mount /var/lib/containerd
+mount /etc/odoo
+mount /var/log/nginx
+mount /var/log/postgresql
+mount /var/lib/nginx
+
 systemctl mask --runtime postgresql.service postgresql@.service docker.service docker.socket containerd.service nginx.service rclone-mount.service
 
 install -d /etc/systemd/system/postgresql@.service.d
