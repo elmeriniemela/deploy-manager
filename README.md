@@ -152,8 +152,6 @@ and run `systemctl mask swap.target`. Then add these entries to `/etc/fstab`:
 /srv/secure/docker /var/lib/docker none noauto,bind 0 0
 /srv/secure/containerd /var/lib/containerd none noauto,bind 0 0
 /srv/secure/odoo-config /etc/odoo none noauto,bind 0 0
-/srv/secure/rclone-config /root/.config/rclone none noauto,bind 0 0
-/srv/secure/rclone-cache /root/.cache/rclone none noauto,bind 0 0
 /srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0
 /srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0
 /srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0
@@ -165,17 +163,15 @@ Create and mount the encrypted directories before installing the services:
 install -d /srv/secure
 mount /srv/secure
 install -d /srv/secure/postgresql /srv/secure/docker /srv/secure/containerd /srv/secure/odoo-config
-install -d /srv/secure/rclone-config /srv/secure/rclone-cache /srv/secure/logs/nginx /srv/secure/logs/postgresql /srv/secure/nginx-temp
-install -d -m 0700 /srv/secure/secrets
+install -d /srv/secure/logs/nginx /srv/secure/logs/postgresql /srv/secure/nginx-temp
+install -d -m 0700 /srv/secure/rclone-config /srv/secure/rclone-cache /srv/secure/backups /srv/secure/secrets
 install -d -m 0711 /srv/secure/tmp
 install -d /var/lib/postgresql /var/lib/docker /var/lib/containerd /etc/odoo
-install -d /root/.config/rclone /root/.cache/rclone /var/log/nginx /var/log/postgresql /var/lib/nginx
+install -d /var/log/nginx /var/log/postgresql /var/lib/nginx
 mount /var/lib/postgresql
 mount /var/lib/docker
 mount /var/lib/containerd
 mount /etc/odoo
-mount /root/.config/rclone
-mount /root/.cache/rclone
 mount /var/log/nginx
 mount /var/log/postgresql
 mount /var/lib/nginx
@@ -192,7 +188,7 @@ Finish the configuration and start the application services:
 htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud
 chown root:www-data /etc/nginx/.htpasswd
 chmod 640 /etc/nginx/.htpasswd
-vim /root/.config/rclone/rclone.conf
+vim /srv/secure/rclone-config/rclone.conf
 vim /srv/secure/secrets/cloudflare.ini
 export TMPDIR=/srv/secure/tmp
 /root/agent-venv19/bin/python -m agentd.api ssl_wildcard
@@ -219,8 +215,6 @@ mount /var/lib/postgresql
 mount /var/lib/docker
 mount /var/lib/containerd
 mount /etc/odoo
-mount /root/.config/rclone
-mount /root/.cache/rclone
 mount /var/log/nginx
 mount /var/log/postgresql
 mount /var/lib/nginx
@@ -297,8 +291,8 @@ Odoo container. Updating one clone with `./update.sh` restarts only its agent.
 * All database dumps and Odoo filestores are encrypted client-side via rclone's `crypt` backend before upload to AWS S3.
 * Create a dedicated S3 bucket in AWS: `odoo-backups-crypt` (e.g. in `eu-north-1`).
 * Generate an obscured password for rclone config:
-  * `rclone obscure 'YourStrongSecretPassphrase'`
-* In `/root/.config/rclone/rclone.conf`, add the `[backup-crypt]` section:
+  * `rclone obscure 'YourStrongSecretPassphrase' --config /srv/secure/rclone-config/rclone.conf`
+* In `/srv/secure/rclone-config/rclone.conf`, add the `[backup-crypt]` section:
   ```ini
   [backup-crypt]
   type = crypt
@@ -317,10 +311,10 @@ Odoo container. Updating one clone with `./update.sh` restarts only its agent.
 ##### Copying existing unencrypted backups to the new encrypted bucket:
 If you have existing plaintext backups in `odoobackup1` and wish to copy them into the new encrypted bucket:
 1. Copy into the encrypted remote (reads unencrypted files, encrypts locally, writes to `odoo-backups-crypt`):
-   * `rclone copy awsbucket:odoobackup1 backup-crypt: --progress --transfers=16`
-2. Verify the files through `/root/backups` or `rclone ls backup-crypt:`
+   * `rclone copy awsbucket:odoobackup1 backup-crypt: --config /srv/secure/rclone-config/rclone.conf --progress --transfers=16`
+2. Verify the files through `/srv/secure/backups` or `rclone --config /srv/secure/rclone-config/rclone.conf ls backup-crypt:`
 3. Once verified, the old unencrypted bucket `odoobackup1` can be kept as a fallback or purged:
-   * `rclone purge awsbucket:odoobackup1`
+   * `rclone purge awsbucket:odoobackup1 --config /srv/secure/rclone-config/rclone.conf`
 
 ##### Decrypting a single file without rclone:
 To manually decrypt a downloaded file without rclone (using only Python and `pip install pynacl`):

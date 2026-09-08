@@ -210,6 +210,8 @@ class BackupTests(unittest.TestCase):
                     [
                         "rclone",
                         "copy",
+                        "--config",
+                        "/srv/secure/rclone-config/rclone.conf",
                         "--transfers=16",
                         "--ignore-existing",
                         "/var/lib/docker/volumes/1a2b/_data/filestore/1a2b",
@@ -220,6 +222,8 @@ class BackupTests(unittest.TestCase):
                     [
                         "rclone",
                         "sync",
+                        "--config",
+                        "/srv/secure/rclone-config/rclone.conf",
                         "--transfers=16",
                         "--ignore-existing",
                         "/var/lib/docker/volumes/1a2b/_data/filestore/1a2b",
@@ -250,6 +254,8 @@ class BackupTests(unittest.TestCase):
             cmd=[
                 "rclone",
                 "check",
+                "--config",
+                "/srv/secure/rclone-config/rclone.conf",
                 "--one-way",
                 "/var/lib/docker/volumes/1a2b/_data/filestore/1a2b",
                 "backup-crypt:1a2b/filestore",
@@ -296,6 +302,8 @@ class RestoreTests(unittest.TestCase):
                     [
                         "rclone",
                         "sync",
+                        "--config",
+                        "/srv/secure/rclone-config/rclone.conf",
                         "--transfers=16",
                         "--ignore-existing",
                         "backup-crypt:1a2b/previous_filestore",

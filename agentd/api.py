@@ -94,18 +94,18 @@ def backup(uid, trigger='manual'):
     agentlib.ensure_backups_mounted()
     fname = agentlib.ts_to_fname(datetime.datetime.now(datetime.timezone.utc))
     agentlib.execute(['pg_dump', '--no-owner', '-Fc', '-f', agentlib.dump_path(uid, trigger, fname, makedirs=True), uid])
-    agentlib.execute([
-        'rclone', 'copy',
+    agentlib.execute(agentlib.rclone_command(
+        'copy',
         '--transfers=16',
         '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
         f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'backup-crypt:{uid}/filestore'
-    ])
-    agentlib.execute([
-        'rclone', 'sync',
+    ))
+    agentlib.execute(agentlib.rclone_command(
+        'sync',
         '--transfers=16',
         '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
         f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'backup-crypt:{uid}/previous_filestore'
-    ])
+    ))
     _logger.info(f"Backup done: {trigger} backup for {uid}")
     return {
         'backups': agentlib.list_backups(uid),
@@ -115,11 +115,11 @@ def backup(uid, trigger='manual'):
 def fshealth(uid):
     agentlib.validate(uid=uid)
     fsproc = agentlib.execute(
-        cmd=[
-            'rclone', 'check',
+        cmd=agentlib.rclone_command(
+            'check',
             '--one-way',
             f'/var/lib/docker/volumes/{uid}/_data/filestore/{uid}', f'backup-crypt:{uid}/filestore'
-        ],
+        ),
         check=False,
     )
     return (fsproc.stderr or '').strip()
@@ -144,12 +144,12 @@ def _restore(src_uid, dst_uid, trigger, backup_file):
             cur.execute(*args)
 
     commands = [
-        [
-            'rclone', 'sync',
+        agentlib.rclone_command(
+            'sync',
             '--transfers=16',
             '--ignore-existing', # Odoo filestore checksums prohibit editing an existing filepath.
             f'backup-crypt:{src_uid}/previous_filestore', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'
-        ],
+        ),
         ['chown', '1000:1000', '-R', f'/var/lib/docker/volumes/{dst_uid}/_data/filestore/{dst_uid}'], # TODO, better way to assign ownership to container user 'odoo'?
         ['pg_restore', '-Fc', '--no-owner', f'--role={dst_uid}', '-d', dst_uid, agentlib.dump_path(src_uid, trigger, backup_file)],
     ]

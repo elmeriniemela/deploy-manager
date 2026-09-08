@@ -19,8 +19,9 @@ Hetzner Volume
         ├── docker          → /var/lib/docker
         ├── containerd      → /var/lib/containerd
         ├── odoo-config     → /etc/odoo
-        ├── rclone-config   → /root/.config/rclone
-        ├── rclone-cache    → /root/.cache/rclone
+        ├── rclone-config
+        ├── rclone-cache
+        ├── backups         (rclone mountpoint)
         ├── nginx-temp      → /var/lib/nginx
         ├── tmp
         ├── secrets
@@ -33,6 +34,10 @@ The mapper and every bind mount use `noauto` in `/etc/fstab`. PostgreSQL,
 Docker, containerd, nginx, rclone, and the deployment agent are disabled at
 boot. Their systemd drop-ins declare every mount unit as a `Requisite`, so a
 direct service start fails while the encrypted storage is not mounted.
+
+Rclone reads its configuration from `/srv/secure/rclone-config/rclone.conf`,
+uses `/srv/secure/rclone-cache`, and mounts the decrypted backup view at
+`/srv/secure/backups`. No rclone path is under `/root`.
 
 Do not store database dumps in `/tmp` or `/var/tmp`. The agent uses
 `/srv/secure/tmp`, PostgreSQL uses `/srv/secure/tmp/postgresql`, and nginx uses
@@ -50,8 +55,6 @@ mount /var/lib/postgresql
 mount /var/lib/docker
 mount /var/lib/containerd
 mount /etc/odoo
-mount /root/.config/rclone
-mount /root/.cache/rclone
 mount /var/log/nginx
 mount /var/log/postgresql
 mount /var/lib/nginx
@@ -84,8 +87,6 @@ systemctl stop odoo-app.target
 umount /var/lib/nginx
 umount /var/log/postgresql
 umount /var/log/nginx
-umount /root/.cache/rclone
-umount /root/.config/rclone
 umount /etc/odoo
 umount /var/lib/containerd
 umount /var/lib/docker

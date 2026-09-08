@@ -55,8 +55,8 @@ install -d /etc/nginx/sites-available
 install -m 0644 nginx/sites-enabled/00_agent19.conf /etc/nginx/sites-available/00_agent19.conf
 install -m 0644 nginx/sites-enabled/odoo.conf /etc/nginx/sites-available/odoo.conf
 
-install -d -m 0700 /root/backups
-install -D -m 0600 rclone.conf /root/.config/rclone/rclone.conf
+install -d -m 0700 /srv/secure/backups
+install -m 0600 rclone.conf /srv/secure/rclone-config/rclone.conf
 install -D -m 0600 cloudflare.ini /srv/secure/secrets/cloudflare.ini
 install -m 0644 sshd/harden.conf /etc/ssh/sshd_config.d/harden.conf
 systemctl reload ssh

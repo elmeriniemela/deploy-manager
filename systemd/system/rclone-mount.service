@@ -7,8 +7,8 @@ PartOf=odoo-app.target
 [Service]
 Type=notify
 User=root
-ExecStart=/usr/bin/rclone mount backup-crypt: /root/backups --vfs-cache-mode full --cache-dir /root/.cache/rclone
-ExecStop=/usr/bin/fusermount3 -u /root/backups
+ExecStart=/usr/bin/rclone mount backup-crypt: /srv/secure/backups --config /srv/secure/rclone-config/rclone.conf --vfs-cache-mode full --cache-dir /srv/secure/rclone-cache
+ExecStop=/usr/bin/fusermount3 -u /srv/secure/backups
 Restart=on-abort
 
 [Install]

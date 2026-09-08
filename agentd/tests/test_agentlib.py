@@ -50,9 +50,9 @@ class PathTests(unittest.TestCase):
         with patch("agentd.agentlib.os.makedirs") as makedirs:
             path = agentlib.dump_path("1a2b", "daily", "dump.pgc", makedirs=True)
 
-        self.assertEqual(path, "/root/backups/1a2b/daily/dump.pgc")
+        self.assertEqual(path, "/srv/secure/backups/1a2b/daily/dump.pgc")
         makedirs.assert_called_once_with(
-            "/root/backups/1a2b/daily", mode=0o700, exist_ok=True
+            "/srv/secure/backups/1a2b/daily", mode=0o700, exist_ok=True
         )
 
     def test_save_odoo_config_creates_directory_and_writes_file(self):
@@ -102,7 +102,7 @@ class BackupListingTests(unittest.TestCase):
         with patch("agentd.agentlib.os.path.ismount", return_value=True) as ismount:
             self.assertTrue(agentlib.backups_mounted())
 
-        ismount.assert_called_once_with("/root/backups")
+        ismount.assert_called_once_with("/srv/secure/backups")
 
     def test_list_backups_returns_empty_list_when_backup_mount_is_absent(self):
         with patch("agentd.agentlib.backups_mounted", return_value=False):
@@ -110,15 +110,15 @@ class BackupListingTests(unittest.TestCase):
 
     def test_list_backups_extracts_metadata_from_dump_paths(self):
         paths = [
-            "/root/backups/1a2b/daily/2026-07-11T12-30-45.pgc",
-            "/root/backups/1a2b/manual/2026-07-10T01-02-03.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-11T12-30-45.pgc",
+            "/srv/secure/backups/1a2b/manual/2026-07-10T01-02-03.pgc",
         ]
 
         with patch("agentd.agentlib.backups_mounted", return_value=True):
             with patch("agentd.agentlib.glob.glob", return_value=paths) as glob:
                 backups = agentlib.list_backups("1a2b")
 
-        glob.assert_called_once_with("/root/backups/1a2b/*/*.pgc")
+        glob.assert_called_once_with("/srv/secure/backups/1a2b/*/*.pgc")
         self.assertEqual(
             backups,
             [

@@ -136,7 +136,7 @@ def save_odoo_config(uid, conf):
         fp.write(conf)
 
 def backups_mounted():
-    return os.path.ismount('/root/backups')
+    return os.path.ismount('/srv/secure/backups')
 
 def ensure_backups_mounted():
     assert backups_mounted(), "Backup dir not mounted. Something wrong with rclone-mount.service.."
@@ -148,10 +148,13 @@ def ts_to_fname(ts):
     return f"{ts.strftime('%Y-%m-%dT%H-%M-%S')}.pgc"
 
 def dump_path(uid, trigger, fname, makedirs=False):
-    dirs = f'/root/backups/{uid}/{trigger}'
+    dirs = f'/srv/secure/backups/{uid}/{trigger}'
     if makedirs:
         os.makedirs(dirs, mode=0o700, exist_ok=True)
     return f'{dirs}/{fname}'
+
+def rclone_command(command, *args):
+    return ['rclone', command, '--config', '/srv/secure/rclone-config/rclone.conf', *args]
 
 def odoo_docker_run(uid, http_port, gevent_port):
     return [

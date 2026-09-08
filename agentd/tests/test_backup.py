@@ -41,11 +41,11 @@ class ScheduledBackupTests(unittest.TestCase):
 
     def test_create_scheduled_backups_removes_all_but_three_latest_dumps(self):
         paths = [
-            "/root/backups/1a2b/daily/2026-07-11T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-10T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-09T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-08T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-07T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-11T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-10T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-09T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-08T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-07T00-00-00.pgc",
         ]
 
         with patch("agentd.backup.datetime.date", fake_today(2026, 7, 14)):
@@ -61,17 +61,17 @@ class ScheduledBackupTests(unittest.TestCase):
         self.assertEqual(
             remove.call_args_list,
             [
-                call("/root/backups/1a2b/daily/2026-07-08T00-00-00.pgc"),
-                call("/root/backups/1a2b/daily/2026-07-07T00-00-00.pgc"),
+                call("/srv/secure/backups/1a2b/daily/2026-07-08T00-00-00.pgc"),
+                call("/srv/secure/backups/1a2b/daily/2026-07-07T00-00-00.pgc"),
             ],
         )
 
     def test_dry_run_does_not_create_or_remove_backups(self):
         paths = [
-            "/root/backups/1a2b/daily/2026-07-11T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-10T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-09T00-00-00.pgc",
-            "/root/backups/1a2b/daily/2026-07-08T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-11T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-10T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-09T00-00-00.pgc",
+            "/srv/secure/backups/1a2b/daily/2026-07-08T00-00-00.pgc",
         ]
 
         with patch("agentd.backup.datetime.date", fake_today(2026, 7, 14)):
