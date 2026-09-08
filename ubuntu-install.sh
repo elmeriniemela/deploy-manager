@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -euxo pipefail
-cd /opt/odoo19
+cd /opt/19
 
 # One-time Ubuntu 24.04 host install. Prepare and mount the encrypted storage
 # first by following README.md.

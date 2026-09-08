@@ -304,7 +304,7 @@ class CommandTests(unittest.TestCase):
         self.assertIn("[::1]:8072:8072", cmd)
         self.assertEqual(cmd[-1], "ghcr.io/elmeriniemela/odoo-src:19.0")
         self.assertEqual(cmd[cmd.index('--label') + 1], 'odoo.version=19.0')
-        self.assertIn('/opt/odoo19/src:/mnt:ro', cmd)
+        self.assertIn('/opt/19/src:/mnt:ro', cmd)
 
     def test_execute_wraps_subprocess_errors(self):
         error = subprocess.CalledProcessError(

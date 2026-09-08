@@ -8,7 +8,7 @@ StartLimitBurst=30
 
 [Service]
 User=root
-WorkingDirectory=/opt/odoo19
+WorkingDirectory=/opt/19
 ExecStart=/root/agent-venv19/bin/python -m agentd --interface 127.0.0.1 --port 8019
 Restart=always
 RestartSec=1

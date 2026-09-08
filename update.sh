@@ -2,7 +2,7 @@
 
 set -e
 
-cd /opt/odoo19
+cd /opt/19
 git pull
 git submodule update
 systemctl restart deploy-manager19.service

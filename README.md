@@ -105,11 +105,11 @@ migration. The commands below format the selected device, so inspect it carefull
 first. See [LUKS.md](LUKS.md)
 for the storage layout and recovery precautions.
 
-Point `odoo19.eniemela.fi` to this server and allow TCP 9019 in the host and
-Hetzner firewalls. The agent is available at `https://odoo19.eniemela.fi:9019`
+Point `19.eniemela.fi` to this server and allow TCP 9019 in the host and
+Hetzner firewalls. The agent is available at `https://19.eniemela.fi:9019`
 through nginx basic authentication; its backend is loopback-only on port 8019.
 
-* `scp .gitconfig odoo19.eniemela.fi:`
+* `scp .gitconfig 19.eniemela.fi:`
 * `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
 * `cat id_ecdsa.pub`
 * go to github / settings / SSH keys / Add 'Odoo 19.0 Hetzner Server key'
@@ -124,8 +124,8 @@ output before continuing. LUKS asks for the passphrase interactively and does
 not store it on the server.
 
 ```bash
-git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/odoo19
-cd /opt/odoo19
+git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/19
+cd /opt/19
 apt update
 apt install -y cryptsetup
 lsblk -f
@@ -241,10 +241,10 @@ this release and make later host configuration changes as explicit commands.
 #### Adding Odoo 20 later
 
 Create a 20.0 branch and replace release-specific 19 values with 20, including the
-service/logrotate filenames. Clone that branch to `/opt/odoo20`, create its Python
+service/logrotate filenames. Clone that branch to `/opt/20`, create its Python
 virtualenv, install its systemd unit, appdata drop-in, logrotate file, and nginx
 site with the corresponding individual commands from `ubuntu-install.sh`. Configure
-DNS and TCP 9020 for `https://odoo20.eniemela.fi:9020`; the backend uses
+DNS and TCP 9020 for `https://20.eniemela.fi:9020`; the backend uses
 `127.0.0.1:8020`. Validate nginx, enable the new agent, and start it through
 `odoo-app.target`.
 
@@ -285,7 +285,7 @@ Odoo container. Updating one clone with `./update.sh` restarts only its agent.
 * `docker login ghcr.io -u elmeriniemela`
 
 #### Building the image
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/odoo19`
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/19`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
 * `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
 
@@ -309,7 +309,7 @@ Odoo container. Updating one clone with `./update.sh` restarts only its agent.
   * `systemctl restart rclone-mount.service`
 * Scheduled cron:
   * `crontab -e`
-  * `30 00 * * * mountpoint -q /srv/secure && cd /opt/odoo19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
+  * `30 00 * * * mountpoint -q /srv/secure && cd /opt/19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
 
 ##### Copying existing unencrypted backups to the new encrypted bucket:
 If you have existing plaintext backups in `odoobackup1` and wish to copy them into the new encrypted bucket:
@@ -324,7 +324,7 @@ To manually decrypt a downloaded file without rclone (using only Python and `pip
 * `python3 docs/decrypt.py <encrypted_file> <decrypted_file> <password>`
 
 #### Clone modules
-* `cd /opt/odoo19/src`
+* `cd /opt/19/src`
 * `git clone -b 19.0 git@github.com:elmeriniemela/tabularium.git`
 * `git clone -b 19.0 --depth=1 --single-branch git@github.com:odoo/odoo.git`
 * `git clone -b 19.0 --depth=1 --single-branch git@github.com:OCA/OpenUpgrade.git`

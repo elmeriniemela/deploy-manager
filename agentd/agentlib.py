@@ -168,7 +168,7 @@ def odoo_docker_run(uid, http_port, gevent_port):
         '--log-opt', 'keep-file=true',
         '--log-opt', 'loki-batch-size=400',
         '--label', 'odoo.version=19.0',
-        '-v', '/opt/odoo19/src:/mnt:ro',
+        '-v', '/opt/19/src:/mnt:ro',
         '-v', f'/var/run/postgresql/:/var/run/postgresql/',
         '-v', f'/etc/odoo/{uid}:/etc/odoo:ro',
         '-v', f'{uid}:/var/lib/odoo',
