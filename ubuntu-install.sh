@@ -5,8 +5,6 @@ cd /opt/19
 
 # One-time Ubuntu 24.04 host install. Create and open the LUKS volume and add its
 # UUID to /etc/crypttab first by following README.md.
-swapoff --all
-sed -i '/^[^#].*[[:space:]]swap[[:space:]]/s/^/# Disabled for LUKS appdata: /' /etc/fstab
 systemctl mask swap.target
 echo '/dev/mapper/appdata /srv/secure ext4 noauto 0 2' >> /etc/fstab
 echo '/srv/secure/postgresql /var/lib/postgresql none noauto,bind 0 0' >> /etc/fstab
