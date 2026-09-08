@@ -109,6 +109,7 @@ Point `19.eniemela.fi` to this server and allow TCP 9019 in the host and
 Hetzner firewalls. The agent is available at `https://19.eniemela.fi:9019`
 through nginx basic authentication; its backend is loopback-only on port 8019.
 
+#### SSH key setup (optional, repos are public)
 * `scp .gitconfig 19.eniemela.fi:`
 * `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
 * `cat id_ecdsa.pub`
