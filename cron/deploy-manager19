@@ -1,4 +1,4 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-30 0 * * * root mountpoint -q /srv/secure && cd /opt/19 && TMPDIR=/srv/secure/tmp /usr/bin/python3 -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1
+30 0 * * * root mountpoint -q /srv/secure && cd /opt/19 && /usr/bin/python3 -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1

@@ -158,8 +158,7 @@ vim /srv/secure/rclone-config/rclone.conf
 vim /srv/secure/secrets/cloudflare.ini
 
 # Add SSL certs
-export TMPDIR=/srv/secure/tmp
-/usr/bin/python3 -m agentd.api ssl_wildcard
+python3 -m agentd.api ssl_wildcard
 # OR
 rsync -aHAX /etc/letsencrypt/ root@NEW_SERVER:/etc/letsencrypt/
 ```
