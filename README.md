@@ -118,7 +118,7 @@ LUKS asks for the passphrase interactively and does not store it on the server.
 ```bash
 apt update
 apt install -y cryptsetup git vim tmux
-git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/19
+git clone -b 19.0 --recurse-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/19
 cd /opt/19
 lsblk -So NAME,MODEL,SERIAL,SIZE,TYPE
 INSTALL_DEVICE=/dev/sdX
