@@ -11,10 +11,32 @@ clients:
       insecure_skip_verify: true
 
 scrape_configs:
-- job_name: system
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: 19.0-odoo-varlogs
-      __path__: /var/log/**/*log
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 19.0-odoo-varlogs
+          __path__: /var/log/**/*log
+
+  - job_name: deploy-manager
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: 19.0-deploy-manager
+          __path__: /srv/secure/logs/deploy-manager19.log
+
+  - job_name: systemd-journal
+    journal:
+      max_age: 12h
+      labels:
+        job: 19.0-odoo-systemd
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        regex: '(deploy-manager19|docker|containerd|nginx|postgresql@18-main|rclone-mount)\.service'
+        action: keep
+      - source_labels: ['__journal__systemd_unit']
+        target_label: unit
+      - source_labels: ['__journal_priority_keyword']
+        target_label: level

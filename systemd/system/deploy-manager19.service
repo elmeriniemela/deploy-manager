@@ -14,7 +14,7 @@ Restart=always
 RestartSec=1
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 StandardOutput=append:/srv/secure/logs/deploy-manager19.log
-StandardError=inherit
+StandardError=append:/srv/secure/logs/deploy-manager19.log
 
 [Install]
 WantedBy=odoo-app.target

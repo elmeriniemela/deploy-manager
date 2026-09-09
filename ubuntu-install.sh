@@ -138,6 +138,9 @@ if ! docker container inspect promtail >/dev/null 2>&1; then
         --restart unless-stopped \
         -v /opt/19/promtail:/etc/promtail:ro \
         -v /var/log:/var/log:ro \
+        -v /srv/secure/logs:/srv/secure/logs:ro \
+        -v /run/log/journal:/run/log/journal:ro \
+        -v /etc/machine-id:/etc/machine-id:ro \
         grafana/promtail:latest \
         -config.file=/etc/promtail/config.yml
 else
