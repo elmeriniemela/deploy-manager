@@ -63,7 +63,7 @@ apt update
 apt install -y docker-ce docker-ce-cli containerd.io
 
 install -m 0644 systemd/system/odoo-app.target systemd/system/rclone-mount.service systemd/system/deploy-manager19.service /etc/systemd/system/
-install -m 0644 systemd/system/docker.service.d/postgresql.conf /etc/systemd/system/docker.service.d/postgresql.conf
+install -m 0644 systemd/system/docker.service.d/postgresql-dependency.conf /etc/systemd/system/docker.service.d/postgresql-dependency.conf
 install -m 0644 systemd/system/postgresql@.service.d/tmp.conf /etc/systemd/system/postgresql@.service.d/tmp.conf
 install -D -m 0644 logrotate/deploy-manager19 /etc/logrotate.d/deploy-manager19
 install -D -m 0644 cron/deploy-manager19 /etc/cron.d/deploy-manager19
