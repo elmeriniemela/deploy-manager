@@ -186,20 +186,11 @@ The bootstrap installs Docker's loopback API override automatically. Configure
 the Loki Docker logging plugin below before creating Odoo containers.
 
 After every reboot, Ubuntu and SSH are available but application services stay
-stopped. Unlock, mount, and start them with the same ordinary commands:
+stopped. From a root login shell, unlock, mount, and start them with:
 
 ```bash
-cryptsetup open "$HETZNER_VOL" appdata
-systemctl start srv-secure.mount
-systemctl start var-lib-postgresql.mount
-systemctl start var-lib-docker.mount
-systemctl start var-lib-containerd.mount
-systemctl start etc-odoo.mount
-systemctl start var-log-nginx.mount
-systemctl start var-log-postgresql.mount
-systemctl start var-lib-nginx.mount
-nginx -t
-systemctl start odoo-app.target
+cd /opt/19
+./unlock-and-start.sh
 ```
 
 The systemd drop-ins installed by `ubuntu-install.sh` prevent protected services

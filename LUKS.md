@@ -53,20 +53,11 @@ application memory is not written to unencrypted disk.
 ## Normal boot procedure
 
 Root's `.bashrc` defines `HETZNER_VOL` as the stable device path recorded during
-installation. Use it when opening the volume:
+installation. From a root login shell, run:
 
 ```bash
-cryptsetup open "$HETZNER_VOL" appdata
-systemctl start srv-secure.mount
-systemctl start var-lib-postgresql.mount
-systemctl start var-lib-docker.mount
-systemctl start var-lib-containerd.mount
-systemctl start etc-odoo.mount
-systemctl start var-log-nginx.mount
-systemctl start var-log-postgresql.mount
-systemctl start var-lib-nginx.mount
-nginx -t
-systemctl start odoo-app.target
+cd /opt/19
+./unlock-and-start.sh
 ```
 
 Before unlocking, SSH should work while the mapper, mounts, and application
@@ -86,8 +77,9 @@ swapon --show
 systemctl status odoo-app.target
 ```
 
-To mount the data for maintenance without starting services, stop after the
-last `.mount` unit. To stop the application and lock the volume:
+To mount the data for maintenance without starting services, run the commands in
+`unlock-and-start.sh` only through the last `.mount` unit. To stop the
+application and lock the volume:
 
 ```bash
 systemctl stop odoo-app.target
