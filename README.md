@@ -129,7 +129,7 @@ asks for the passphrase interactively and does not store it on the server.
 git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/19
 cd /opt/19
 apt update
-apt install -y cryptsetup
+apt install -y cryptsetup gnupg
 lsblk -So NAME,MODEL,SERIAL,SIZE,TYPE
 cryptsetup luksFormat --type luks2 /dev/sdX
 LUKS_UUID="$(cryptsetup luksUUID /dev/sdX)" && echo "$LUKS_UUID"
@@ -156,12 +156,7 @@ bash ./append.sh
 bash ./ubuntu-install.sh
 ```
 
-Both files are linear command lists without loops or conditional branches.
-`append.sh` appends the fixed mount configuration and permits the rclone FUSE
-mount at `/srv/secure/backups` in the local `fusermount3` AppArmor policy.
-`ubuntu-install.sh` disables swap, creates and mounts the encrypted directories,
-and installs the host services. It uses idempotent systemd mount starts and does
-not overwrite configured rclone or Cloudflare credentials when rerun.
+Both files are simple linear command lists without loops or conditional branches that are easy to review.
 
 Finish the configuration and start the application services:
 
@@ -184,8 +179,8 @@ systemctl start odoo-app.target
 su - postgres -c "createuser -s root"
 ```
 
-Copy `/root/appdata-luks-header-<uuid>.img` to offline storage, verify the copy,
-then delete the server copy. Keep the passphrase separately.
+Encrypt `/root/appdata-luks-header-<uuid>.img` before transferring it, then
+remove the plaintext copy. See [LUKS.md](LUKS.md#encrypting-the-header-backup).
 
 The bootstrap installs Docker's loopback API override automatically. Configure
 the Loki Docker logging plugin below before creating Odoo containers.
@@ -195,14 +190,14 @@ stopped. Unlock, mount, and start them with the same ordinary commands:
 
 ```bash
 cryptsetup open "$HETZNER_VOL" appdata
-mount /srv/secure
-mount /var/lib/postgresql
-mount /var/lib/docker
-mount /var/lib/containerd
-mount /etc/odoo
-mount /var/log/nginx
-mount /var/log/postgresql
-mount /var/lib/nginx
+systemctl start srv-secure.mount
+systemctl start var-lib-postgresql.mount
+systemctl start var-lib-docker.mount
+systemctl start var-lib-containerd.mount
+systemctl start etc-odoo.mount
+systemctl start var-log-nginx.mount
+systemctl start var-log-postgresql.mount
+systemctl start var-lib-nginx.mount
 nginx -t
 systemctl start odoo-app.target
 ```

@@ -57,21 +57,21 @@ installation. Use it when opening the volume:
 
 ```bash
 cryptsetup open "$HETZNER_VOL" appdata
-mount /srv/secure
-mount /var/lib/postgresql
-mount /var/lib/docker
-mount /var/lib/containerd
-mount /etc/odoo
-mount /var/log/nginx
-mount /var/log/postgresql
-mount /var/lib/nginx
+systemctl start srv-secure.mount
+systemctl start var-lib-postgresql.mount
+systemctl start var-lib-docker.mount
+systemctl start var-lib-containerd.mount
+systemctl start etc-odoo.mount
+systemctl start var-log-nginx.mount
+systemctl start var-log-postgresql.mount
+systemctl start var-lib-nginx.mount
 nginx -t
 systemctl start odoo-app.target
 ```
 
 Before unlocking, SSH should work while the mapper, mounts, and application
 services remain inactive. A wrong passphrase leaves the mapper closed. If a
-mount command fails, stop there and inspect the device and `/etc/fstab` rather
+mount unit fails, stop there and inspect the device and `/etc/fstab` rather
 than starting services.
 
 Useful inspection commands:
@@ -87,7 +87,7 @@ systemctl status odoo-app.target
 ```
 
 To mount the data for maintenance without starting services, stop after the
-last `mount` command. To stop the application and lock the volume:
+last `.mount` unit. To stop the application and lock the volume:
 
 ```bash
 systemctl stop odoo-app.target
@@ -135,14 +135,30 @@ header; during recovery, preserve the damaged current header before attempting a
 restore. A header backup also does not replace ordinary application-data backups.
 
 The first-install procedure creates
-`/root/appdata-luks-header-<uuid>.img`. Copy it to offline storage, verify the
-copy, and delete the server copy. Keep the header backup and passphrase
-separately. The header backup alone cannot decrypt the volume, but the backup
-together with a passphrase valid when it was created can—even if that passphrase
-was later changed or removed from the live header. Create a new header backup
-after intentional keyslot changes, and securely destroy old copies if a removed
-passphrase must no longer work. Losing both the usable live header and every
-header backup makes the data unrecoverable.
+`/root/appdata-luks-header-<uuid>.img`. The header backup alone cannot decrypt
+the volume, but the backup together with a passphrase valid when it was created
+can—even if that passphrase was later changed or removed from the live header.
+Create a new header backup after intentional keyslot changes, and securely
+destroy old copies if a removed passphrase must no longer work. Losing both the
+usable live header and every header backup makes the data unrecoverable.
+
+### Encrypting the header backup
+
+GPG prompts for the password. Encrypt the header before transferring it:
+
+```bash
+HEADER_NAME="appdata-luks-header-$LUKS_UUID.img"
+gpg --symmetric "/root/$HEADER_NAME"
+```
+
+Decrypt it when needed:
+
+```bash
+gpg --output "/root/$HEADER_NAME" --decrypt "/offline/path/$HEADER_NAME.gpg"
+```
+
+Transfer only the `.gpg` file and remove the plaintext server copy after the
+backup is stored safely. Keep the GPG password separately.
 
 See the official [`luksHeaderBackup` manual](https://man7.org/linux/man-pages/man8/cryptsetup-luksheaderbackup.8.html)
 for the recovery and security warnings.
