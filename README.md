@@ -1,7 +1,7 @@
 # Deployment Manager for Odoo images
 
 ## Abstract
-This project supports self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, a short one-time Ubuntu setup command list, and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles client-side encrypted database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone` (with zero-knowledge `crypt` overlay), with scheduled retention cleanup.
+This project supports self-hosted Odoo deployments on a Linux host. It provides a custom Odoo Docker image, a rerunnable Ubuntu host configuration script, and an XML-RPC deployment manager for instance lifecycle tasks such as create/reset/restart/upgrade, hostname-to-port routing updates, and SSL certificate management. It also handles client-side encrypted database and filestore backup/restore workflows using `pg_dump`/`pg_restore` and `rclone` (with zero-knowledge `crypt` overlay), with scheduled retention cleanup.
 
 The XML-RPC API can be used from an Odoo instance to do self upgrades of Odoo source code.
 
@@ -109,38 +109,29 @@ Point `19.eniemela.fi` to this server and allow TCP 9019 in the host and
 Hetzner firewalls. The agent is available at `https://19.eniemela.fi:9019`
 through nginx basic authentication; its backend is loopback-only on port 8019.
 
-#### SSH key setup (optional, repos are public)
-* `scp .gitconfig 19.eniemela.fi:`
-* `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
-* `cat id_ecdsa.pub`
-* go to github / settings / SSH keys / Add 'Odoo 19.0 Hetzner Server key'
-    * https://github.com/settings/keys
-
 #### Installation
 
 Run the following as root. Identify the volume by matching its `MODEL`, `SERIAL`,
 and `SIZE` with the Hetzner Console. Use its `/dev/sdX` name only for the initial
-format. Afterward, save the stable LUKS UUID path in root's `.bashrc` for later
-login shells. `luksFormat` and `mkfs.ext4` destroy data on the selected device,
-so confirm the `lsblk`, `findmnt`, and `wipefs` output before continuing. LUKS
-asks for the passphrase interactively and does not store it on the server.
+format; `/etc/crypttab` stores the stable UUID used after that. `luksFormat` and
+`mkfs.ext4` destroy data on the selected device, so confirm the `lsblk` output before continuing.
+LUKS asks for the passphrase interactively and does not store it on the server.
 
 ```bash
+apt update
+apt install -y cryptsetup git vim tmux
 git clone -b 19.0 --recurse-submodules --shallow-submodules https://github.com/elmeriniemela/deploy-manager.git /opt/19
 cd /opt/19
-apt update
-apt install -y cryptsetup gnupg
 lsblk -So NAME,MODEL,SERIAL,SIZE,TYPE
-cryptsetup luksFormat --type luks2 /dev/sdX
-LUKS_UUID="$(cryptsetup luksUUID /dev/sdX)" && echo "$LUKS_UUID"
-udevadm trigger --action=change --name-match=/dev/sdX
+INSTALL_DEVICE=/dev/sdX
+cryptsetup luksFormat --type luks2 "$INSTALL_DEVICE"
+LUKS_UUID="$(cryptsetup luksUUID "$INSTALL_DEVICE")" && echo "$LUKS_UUID"
+udevadm trigger --action=change --name-match="$INSTALL_DEVICE"
 udevadm settle
-echo "export HETZNER_VOL=\"/dev/disk/by-uuid/$LUKS_UUID\"" >> /root/.bashrc
-export HETZNER_VOL="/dev/disk/by-uuid/$LUKS_UUID"
-readlink -e "$HETZNER_VOL"
-cryptsetup open "$HETZNER_VOL" appdata
+readlink -e "/dev/disk/by-uuid/$LUKS_UUID"
+cryptsetup open "$INSTALL_DEVICE" appdata
 mkfs.ext4 /dev/mapper/appdata
-cryptsetup luksHeaderBackup "$HETZNER_VOL" --header-backup-file "/root/appdata-luks-header-$LUKS_UUID.img"
+cryptsetup luksHeaderBackup "$INSTALL_DEVICE" --header-backup-file "/root/appdata-luks-header-$LUKS_UUID.img"
 ```
 
 Append the UUID entry to `/etc/crypttab`:
@@ -149,14 +140,14 @@ Append the UUID entry to `/etc/crypttab`:
 echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 ```
 
-The host installer can be rerun after a partial failure; do not rerun `append.sh`.
+Configure the host. This command is idempotent and can be rerun after a partial
+failure or configuration change. It also installs the Loki Docker plugin,
+Promtail, node exporter, the scheduled backup job, and the required module
+repositories.
 
 ```bash
-bash ./append.sh
 bash ./ubuntu-install.sh
 ```
-
-Both files are simple linear command lists without loops or conditional branches that are easy to review.
 
 Finish the configuration and start the application services:
 
@@ -164,115 +155,50 @@ Finish the configuration and start the application services:
 htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud
 chown root:www-data /etc/nginx/.htpasswd
 chmod 640 /etc/nginx/.htpasswd
+# Add passwrods
 vim /srv/secure/rclone-config/rclone.conf
 vim /srv/secure/secrets/cloudflare.ini
 
 export TMPDIR=/srv/secure/tmp
-/root/agent-venv19/bin/python -m agentd.api ssl_wildcard
+/usr/bin/python3 -m agentd.api ssl_wildcard
 # OR
-sudo rsync -aHAX /etc/letsencrypt/ root@NEW_SERVER:/etc/letsencrypt/
+rsync -aHAX /etc/letsencrypt/ root@NEW_SERVER:/etc/letsencrypt/
 
-ln -s /etc/nginx/sites-available/00_agent19.conf /etc/nginx/sites-enabled/00_agent19.conf
-ln -s /etc/nginx/sites-available/odoo.conf /etc/nginx/sites-enabled/odoo.conf
 nginx -t
 systemctl start odoo-app.target
-su - postgres -c "createuser -s root"
 ```
 
 Encrypt `/root/appdata-luks-header-<uuid>.img` before transferring it, then
 remove the plaintext copy. See [LUKS.md](LUKS.md#encrypting-the-header-backup).
 
-The bootstrap installs Docker's loopback API override automatically. Configure
-the Loki Docker logging plugin below before creating Odoo containers.
-
 After every reboot, Ubuntu and SSH are available but application services stay
 stopped. From a root login shell, unlock, mount, and start them with:
 
 ```bash
-cd /opt/19
-./unlock-and-start.sh
+systemctl start systemd-cryptsetup@appdata.service
+systemctl start odoo-app.target
 ```
 
-The systemd drop-ins installed by `ubuntu-install.sh` prevent protected services
-from starting while any encrypted mount unit is inactive. Use `findmnt /srv/secure`
-and `findmnt /var/lib/docker` to inspect mounts, and `systemctl status
-odoo-app.target` to inspect the services.
+The systemd drop-ins installed by `ubuntu-install.sh` pull in the encrypted bind
+mounts and prevent protected services from starting if a required mount fails.
+Use `findmnt /srv/secure` and `findmnt /var/lib/docker` to inspect mounts, and
+`systemctl status odoo-app.target` to inspect the services.
 
 The encrypted filesystem also contains nginx request-body temporary files,
 agent temporary files and rotating agent logs. Do not use unencrypted `/tmp` or
 `/var/tmp` for database dumps. Persistent swap is disabled. Confirm that
 `swapon --show` is empty before starting the application services.
 
-Do not rerun the one-time installer as an update mechanism. Use `./update.sh` for
-this release and make later host configuration changes as explicit commands.
-
-#### Promtail setup (TODO: deprecated, migrate to Alloy)
-* Promtail is an agent which ships the contents of local logs to a private Grafana Loki instance: https://grafana.com/docs/loki/latest/send-data/promtail/
-* Attach new server to the same private network as "monitoring" in hetzner cloud.
-* docker run \
-    -v ./promtail:/etc/promtail \
-    -v /var/log:/var/log \
-    --restart unless-stopped \
-    --name promtail -d \
-    grafana/promtail:latest -config.file=/etc/promtail/config.yml
-
-* https://grafana.com/docs/loki/latest/send-data/docker-driver/
-* https://grafana.com/docs/loki/latest/send-data/docker-driver/configuration/
-* `docker plugin install grafana/loki-docker-driver --alias loki --grant-all-permissions`
-
-#### Prometheus node exporter monitoring:
-* Prometheus exporter for hardware and OS metrics exposed by *NIX kernels, written in Go with pluggable metric collectors: https://github.com/prometheus/node_exporter
-* docker run -d \
-    --net="host" \
-    --pid="host" \
-    -v "/:/host:ro,rslave" \
-    --restart unless-stopped \
-    quay.io/prometheus/node-exporter:latest \
-    --path.rootfs=/host
-
-#### Creating a personal github access token (READ only):
-* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
-* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
-    * https://github.com/settings/tokens/new
-* `docker login ghcr.io -u elmeriniemela`
-
-#### Building the image
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/19`
-* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#building-container-images
-* `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
-
-
 #### Backup setup (Client-Side Encrypted S3 Backups):
 * All database dumps and Odoo filestores are encrypted client-side via rclone's `crypt` backend before upload to AWS S3.
-* Create a dedicated S3 bucket in AWS: `odoo-backups-crypt` (e.g. in `eu-north-1`).
 * Generate an obscured password for rclone config:
   * `rclone obscure 'YourStrongSecretPassphrase' --config /srv/secure/rclone-config/rclone.conf`
-* In `/srv/secure/rclone-config/rclone.conf`, add the `[backup-crypt]` section:
-  ```ini
-  [backup-crypt]
-  type = crypt
-  remote = awsbucket:odoo-backups-crypt
-  filename_encryption = off
-  directory_name_encryption = false
-  password = <output from rclone obscure>
-  ```
   *(Important: Back up this passphrase in an offline password manager. If lost, encrypted backups cannot be recovered!)*
-* Mount the encrypted remote:
-  * `systemctl restart rclone-mount.service`
-* Scheduled cron:
-  * `crontab -e`
-  * `30 00 * * * mountpoint -q /srv/secure && cd /opt/19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
+* `/etc/cron.d/deploy-manager19` runs the scheduled backup at 00:30 daily.
 
 ##### Decrypting a single file without rclone:
 To manually decrypt a downloaded file without rclone (using only Python and `pip install pynacl`):
 * `python3 docs/decrypt.py <encrypted_file> <decrypted_file> <password>`
-
-#### Clone modules
-* `cd /opt/19/src`
-* `git clone -b 19.0 https://github.com/elmeriniemela/tabularium.git`
-* `git clone -b 19.0 --depth=1 --single-branch https://github.com/odoo/odoo.git`
-* `git clone -b 19.0 --depth=1 --single-branch https://github.com/OCA/OpenUpgrade.git`
-
 
 ## Other notes
 
@@ -283,24 +209,33 @@ To manually decrypt a downloaded file without rclone (using only Python and `pip
 * https://wiki.postgresql.org/wiki/Shared_Database_Hosting
 * https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf
 
-### Local setup
-* sudo docker run \
-    -v /home/elmeri/Odoo/src/16:/mnt:ro \
-    -v /var/run/postgresql:/var/run/postgresql \
-    -v /home/elmeri/Odoo/src/16/own-docker.conf:/etc/odoo/odoo.conf:ro \
-    -v /home/elmeri/.local/share/Odoo:/var/lib/odoo \
-    -p 127.0.0.1:8016:8069 \
-    -p 127.0.0.1:9016:8072 \
-    --name eniemela_16 -ti ghcr.io/elmeriniemela/odoo-src:19.0
-* sudo docker restart eniemela_16 && sudo docker attach eniemela_16
-* sudo docker exec -it -u root eniemela_16 bash
-* sudo docker restart eniemela_16 && sudo docker exec -it -u root eniemela_16 odoo -u investment_portfolio --http-port=9999 --stop-after-init && sudo docker restart eniemela_16 && sudo docker attach eniemela_16
+
+#### Creating a personal github access token (write packages only):
+* https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+* Go to Settings / Developer / New personal access token (classic) / Add 'Odoo 19.0 Hetzner Server key' + add repo and write:packages
+    * https://github.com/settings/tokens/new
+* `docker login ghcr.io -u elmeriniemela`
+
+### Image development and publishing
+
+Production hosts pull the public image without GitHub credentials. Building and
+publishing require a developer workstation authenticated to GHCR with package
+write permission.
+
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 .`
+* `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
+* https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+
+#### SSH key setup (optional, repos are public)
+* `scp .gitconfig 19.eniemela.fi:`
+* `cd .ssh && ssh-keygen -f id_ecdsa -t ecdsa -b 521`
+* `cat id_ecdsa.pub`
+* go to github / settings / SSH keys / Add 'Odoo 19.0 Hetzner Server key'
+    * https://github.com/settings/keys
 
 ### Local mermaid-cli installation for AGENTS.md verification of the diagram:
-* `sudo pacman -S nodejs npm`
-* `sudo npm install -g @mermaid-js/mermaid-cli`
-* `npx puppeteer browsers install chrome-headless-shell@131.0.6778.204`. NOTE: mmdc pins to a specific version, adapt if needed.
-* See AGENTS.md for usage.
+* Install `sudo pacman -S mermaid-cli` for your development platform.
+* See AGENTS.md for the rerunnable validation commands.
 
 ### Tests
 * `python3 -m unittest discover -s agentd/tests -t .`
@@ -310,6 +245,4 @@ To manually decrypt a downloaded file without rclone (using only Python and `pip
 * Docker logs
 * Docker volumes: `ls /var/lib/docker/volumes`
 * Delete everything: `docker system prune -a --volumes`
-* Remote access: https://docs.docker.com/config/daemon/remote-access/
-* Docker API: https://docs.docker.com/engine/api/latest/
 * Login as root: `docker exec -it -u root <uid> bash`

@@ -11,8 +11,7 @@ deliberate operator action, not hidden in a Bash script.
 
 The initial format may use a verified kernel device name such as `/dev/sdb`.
 Identify it by matching the `MODEL`, `SERIAL`, and `SIZE` from `lsblk` with the
-Hetzner Console. Once LUKS exists, store its stable
-`/dev/disk/by-uuid/<luks-uuid>` path as `HETZNER_VOL` in root's `.bashrc`; do not
+Hetzner Console. Once LUKS exists, `/etc/crypttab` stores its stable UUID; do not
 persist `/dev/sdb`, because kernel device names can change.
 
 ## Storage layout
@@ -38,8 +37,8 @@ Hetzner Volume
 
 The mapper and every bind mount use `noauto` in `/etc/fstab`. PostgreSQL,
 Docker, containerd, nginx, rclone, and the deployment agent are disabled at
-boot. Their systemd drop-ins declare every mount unit as a `Requisite`, so a
-direct service start fails while the encrypted storage is not mounted.
+boot. Their systemd drop-ins use `RequiresMountsFor` so systemd starts the bind
+mounts on demand and fails the service if a required mount cannot be started.
 
 Rclone reads its configuration from `/srv/secure/rclone-config/rclone.conf`,
 uses `/srv/secure/rclone-cache`, and mounts the decrypted backup view at
@@ -52,12 +51,12 @@ application memory is not written to unencrypted disk.
 
 ## Normal boot procedure
 
-Root's `.bashrc` defines `HETZNER_VOL` as the stable device path recorded during
-installation. From a root login shell, run:
+The generated `systemd-cryptsetup@appdata.service` reads the stable device UUID
+from `/etc/crypttab`. From a root login shell, run:
 
 ```bash
-cd /opt/19
-./unlock-and-start.sh
+systemctl start systemd-cryptsetup@appdata.service
+systemctl start odoo-app.target
 ```
 
 Before unlocking, SSH should work while the mapper, mounts, and application
@@ -77,9 +76,15 @@ swapon --show
 systemctl status odoo-app.target
 ```
 
-To mount the data for maintenance without starting services, run the commands in
-`unlock-and-start.sh` only through the last `.mount` unit. To stop the
-application and lock the volume:
+To mount the data for maintenance without starting services, start the encrypted
+volume and mount units directly:
+
+```bash
+systemctl start systemd-cryptsetup@appdata.service
+systemctl start srv-secure.mount var-lib-postgresql.mount var-lib-docker.mount var-lib-containerd.mount etc-odoo.mount var-log-nginx.mount var-log-postgresql.mount var-lib-nginx.mount
+```
+
+To stop the application and lock the volume:
 
 ```bash
 systemctl stop odoo-app.target
@@ -91,7 +96,7 @@ umount /var/lib/containerd
 umount /var/lib/docker
 umount /var/lib/postgresql
 umount /srv/secure
-cryptsetup close appdata
+systemctl stop systemd-cryptsetup@appdata.service
 ```
 
 ## Recovery material
@@ -119,7 +124,7 @@ physically present but impossible to decrypt. A header backup can restore the
 information needed to unlock it:
 
 ```bash
-cryptsetup luksHeaderRestore "$HETZNER_VOL" --header-backup-file "/offline/path/appdata-luks-header-<uuid>.img"
+cryptsetup luksHeaderRestore "/dev/disk/by-uuid/<luks-uuid>" --header-backup-file "/offline/path/appdata-luks-header-<uuid>.img"
 ```
 
 Do not run `luksHeaderRestore` during normal operation. It overwrites the current

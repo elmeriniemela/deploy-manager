@@ -1,4 +1,4 @@
 [Unit]
 Description=Odoo application services
-Requires=postgresql@18-main.service containerd.service docker.service nginx.service rclone-mount.service
-After=postgresql@18-main.service containerd.service docker.service nginx.service rclone-mount.service
+Requires=postgresql@18-main.service docker.service nginx.service rclone-mount.service
+After=postgresql@18-main.service docker.service nginx.service rclone-mount.service

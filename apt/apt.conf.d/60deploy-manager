@@ -1,0 +1,7 @@
+// Local policy layered after Ubuntu's package-owned defaults.
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+
+// Preserve the manually unlocked application volume across maintenance.
+Unattended-Upgrade::Automatic-Reboot "false";

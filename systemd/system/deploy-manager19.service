@@ -9,10 +9,10 @@ StartLimitBurst=30
 [Service]
 User=root
 WorkingDirectory=/opt/19
-ExecStart=/root/agent-venv19/bin/python -m agentd --interface 127.0.0.1 --port 8019
+ExecStart=/usr/bin/python3 -m agentd --interface 127.0.0.1 --port 8019
 Restart=always
 RestartSec=1
-Environment=PATH=/root/agent-venv19/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=TMPDIR=/srv/secure/tmp
 StandardOutput=append:/srv/secure/logs/deploy-manager19.log
 StandardError=inherit

@@ -3,7 +3,7 @@ import subprocess
 import socket
 import psycopg2
 import re
-import requests
+import json
 from jinja2 import Template
 import os
 import glob
@@ -198,26 +198,34 @@ def list_backups(uid):
 
 def list_instances():
     instances = []
-    docker_ps_a = requests.get(
-        url='http://127.0.0.1:2375/containers/json',
-        params={'all': True},
-    ).json()
+    container_ids = execute([
+        'docker', 'container', 'ls', '--all', '--quiet', '--no-trunc',
+        '--filter', 'label=odoo.version=19.0',
+    ]).stdout.split()
+    if not container_ids:
+        return instances
 
-    for container in docker_ps_a:
-        if container.get('Labels', {}).get('odoo.version') != '19.0':
+    inspected = json.loads(execute([
+        'docker', 'container', 'inspect', *container_ids,
+    ]).stdout)
+    for details in inspected:
+        labels = details.get('Config', {}).get('Labels') or {}
+        if labels.get('odoo.version') != '19.0':
             continue
-        uid = container['Names'][0].lstrip('/')
+        uid = details.get('Name', '').lstrip('/')
         try:
             validate(uid=uid)
         except ValueError:
             continue
 
-        cid = container['Id']
-        container['inspect'] = requests.get(url=f'http://127.0.0.1:2375/containers/{cid}/json').json()
-
         instances.append({
             'uid': uid,
-            'docker': container,
+            'docker': {
+                'Names': [details['Name']],
+                'Id': details['Id'],
+                'Labels': labels,
+                'inspect': details,
+            },
             'backups': list_backups(uid),
         })
     return instances

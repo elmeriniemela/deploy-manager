@@ -1,4 +1,5 @@
 import datetime
+import json
 import subprocess
 import unittest
 import tempfile
@@ -139,29 +140,32 @@ class BackupListingTests(unittest.TestCase):
 
 class InventoryTests(unittest.TestCase):
     def test_list_instances_skips_invalid_container_names_and_adds_inspect_data(self):
-        containers = [
-            {"Names": ["/1a2b"], "Id": "container-1", "Labels": {"odoo.version": "19.0"}},
-            {"Names": ["/not-hex"], "Id": "container-2", "Labels": {"odoo.version": "19.0"}},
-            {"Names": ["/2b3c"], "Id": "container-3", "Labels": {"odoo.version": "20.0"}},
-            {"Names": ["/3c4d"], "Id": "container-4"},
+        inspected = [
+            {"Name": "/1a2b", "Id": "container-1", "Config": {"Labels": {"odoo.version": "19.0"}}, "State": {"Running": True}},
+            {"Name": "/not-hex", "Id": "container-2", "Config": {"Labels": {"odoo.version": "19.0"}}},
+            {"Name": "/2b3c", "Id": "container-3", "Config": {"Labels": {"odoo.version": "20.0"}}},
+            {"Name": "/3c4d", "Id": "container-4", "Config": {}},
         ]
-        responses = [
-            SimpleNamespace(json=lambda: containers),
-            SimpleNamespace(json=lambda: {"State": {"Running": True}}),
+        commands = [
+            SimpleNamespace(stdout="container-1\ncontainer-2\ncontainer-3\ncontainer-4\n"),
+            SimpleNamespace(stdout=json.dumps(inspected)),
         ]
 
-        with patch("agentd.agentlib.requests.get", side_effect=responses) as get:
+        with patch("agentd.agentlib.execute", side_effect=commands) as execute:
             with patch("agentd.agentlib.list_backups", return_value=[{"fname": "dump.pgc"}]):
                 instances = agentlib.list_instances()
 
         self.assertEqual(
-            get.call_args_list,
+            execute.call_args_list,
             [
-                call(
-                    url="http://127.0.0.1:2375/containers/json",
-                    params={"all": True},
-                ),
-                call(url="http://127.0.0.1:2375/containers/container-1/json"),
+                call([
+                    "docker", "container", "ls", "--all", "--quiet", "--no-trunc",
+                    "--filter", "label=odoo.version=19.0",
+                ]),
+                call([
+                    "docker", "container", "inspect", "container-1", "container-2",
+                    "container-3", "container-4",
+                ]),
             ],
         )
         self.assertEqual(
@@ -173,12 +177,21 @@ class InventoryTests(unittest.TestCase):
                         "Names": ["/1a2b"],
                         "Id": "container-1",
                         "Labels": {"odoo.version": "19.0"},
-                        "inspect": {"State": {"Running": True}},
+                        "inspect": inspected[0],
                     },
                     "backups": [{"fname": "dump.pgc"}],
                 }
             ],
         )
+
+    def test_list_instances_avoids_inspect_when_no_containers_exist(self):
+        with patch(
+            "agentd.agentlib.execute",
+            return_value=SimpleNamespace(stdout=""),
+        ) as execute:
+            self.assertEqual(agentlib.list_instances(), [])
+
+        execute.assert_called_once()
 
     def test_list_postgres_converts_cursor_rows_to_dicts(self):
         cursor = MagicMock()
