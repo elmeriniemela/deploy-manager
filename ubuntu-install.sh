@@ -74,6 +74,11 @@ install -d /etc/nginx/sites-available
 install -m 0644 nginx/sites-enabled/00_agent19.conf /etc/nginx/sites-available/00_agent19.conf
 install -m 0644 nginx/sites-enabled/odoo.conf /etc/nginx/sites-available/odoo.conf
 
+# Permit only the rclone filesystem mounted at the encrypted backup path.
+grep -qF '<local/fusermount3>' /etc/apparmor.d/fusermount3
+install -D -m 0644 apparmor/local/fusermount3 /etc/apparmor.d/local/fusermount3
+apparmor_parser -r /etc/apparmor.d/fusermount3
+
 install -d -m 0700 /srv/secure/backups
 cp --update=none rclone.conf /srv/secure/rclone-config/rclone.conf
 chmod 0600 /srv/secure/rclone-config/rclone.conf

@@ -12,9 +12,4 @@ echo '/srv/secure/logs/nginx /var/log/nginx none noauto,bind 0 0' >> /etc/fstab
 echo '/srv/secure/logs/postgresql /var/log/postgresql none noauto,bind 0 0' >> /etc/fstab
 echo '/srv/secure/nginx-temp /var/lib/nginx none noauto,bind 0 0' >> /etc/fstab
 
-# Permit only the rclone filesystem mounted at the encrypted backup path.
-grep -qF '<local/fusermount3>' /etc/apparmor.d/fusermount3
-install -D -m 0644 apparmor/local/fusermount3 /etc/apparmor.d/local/fusermount3
-apparmor_parser -r /etc/apparmor.d/fusermount3
-
 systemctl daemon-reload

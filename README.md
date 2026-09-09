@@ -149,9 +149,7 @@ Append the UUID entry to `/etc/crypttab`:
 echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 ```
 
-Append the fixed `/etc/fstab` entries and install the local AppArmor rule once,
-then run the host installer. The host installer can be rerun after a partial
-failure; do not rerun `append.sh`.
+The host installer can be rerun after a partial failure; do not rerun `append.sh`.
 
 ```bash
 bash ./append.sh
