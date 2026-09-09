@@ -206,22 +206,6 @@ agent temporary files and rotating agent logs. Do not use unencrypted `/tmp` or
 Do not rerun the one-time installer as an update mechanism. Use `./update.sh` for
 this release and make later host configuration changes as explicit commands.
 
-#### Adding Odoo 20 later
-
-Create a 20.0 branch and replace release-specific 19 values with 20, including the
-service/logrotate filenames. Clone that branch to `/opt/20`, create its Python
-virtualenv, install its systemd unit, appdata drop-in, logrotate file, and nginx
-site with the corresponding individual commands from `ubuntu-install.sh`. Configure
-DNS and TCP 9020 for `https://20.eniemela.fi:9020`; the backend uses
-`127.0.0.1:8020`. Validate nginx, enable the new agent, and start it through
-`odoo-app.target`.
-
-Each agent discovers and backs up only containers with its release's
-`odoo.version` label. UIDs and HTTP/gevent ports must be unique across the entire
-server, including stopped containers. Both releases share the PostgreSQL cluster,
-backup remote and nginx routing maps. Static files are served by the selected
-Odoo container. Updating one clone with `./update.sh` restarts only its agent.
-
 #### Promtail setup (TODO: deprecated, migrate to Alloy)
 * Promtail is an agent which ships the contents of local logs to a private Grafana Loki instance: https://grafana.com/docs/loki/latest/send-data/promtail/
 * Attach new server to the same private network as "monitoring" in hetzner cloud.
@@ -279,23 +263,15 @@ Odoo container. Updating one clone with `./update.sh` restarts only its agent.
   * `crontab -e`
   * `30 00 * * * mountpoint -q /srv/secure && cd /opt/19 && TMPDIR=/srv/secure/tmp /root/agent-venv19/bin/python -m agentd.backup >> /srv/secure/logs/deploy-manager19.log 2>&1`
 
-##### Copying existing unencrypted backups to the new encrypted bucket:
-If you have existing plaintext backups in `odoobackup1` and wish to copy them into the new encrypted bucket:
-1. Copy into the encrypted remote (reads unencrypted files, encrypts locally, writes to `odoo-backups-crypt`):
-   * `rclone copy awsbucket:odoobackup1 backup-crypt: --config /srv/secure/rclone-config/rclone.conf --progress --transfers=16`
-2. Verify the files through `/srv/secure/backups` or `rclone --config /srv/secure/rclone-config/rclone.conf ls backup-crypt:`
-3. Once verified, the old unencrypted bucket `odoobackup1` can be kept as a fallback or purged:
-   * `rclone purge awsbucket:odoobackup1 --config /srv/secure/rclone-config/rclone.conf`
-
 ##### Decrypting a single file without rclone:
 To manually decrypt a downloaded file without rclone (using only Python and `pip install pynacl`):
 * `python3 docs/decrypt.py <encrypted_file> <decrypted_file> <password>`
 
 #### Clone modules
 * `cd /opt/19/src`
-* `git clone -b 19.0 git@github.com:elmeriniemela/tabularium.git`
-* `git clone -b 19.0 --depth=1 --single-branch git@github.com:odoo/odoo.git`
-* `git clone -b 19.0 --depth=1 --single-branch git@github.com:OCA/OpenUpgrade.git`
+* `git clone -b 19.0 https://github.com/elmeriniemela/tabularium.git`
+* `git clone -b 19.0 --depth=1 --single-branch https://github.com/odoo/odoo.git`
+* `git clone -b 19.0 --depth=1 --single-branch https://github.com/OCA/OpenUpgrade.git`
 
 
 ## Other notes
