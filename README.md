@@ -149,17 +149,18 @@ Append the UUID entry to `/etc/crypttab`:
 echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 ```
 
-Append the fixed `/etc/fstab` entries once, then run the host installer. The host
-installer can be rerun after a partial failure; do not rerun
-`fstab-append.sh`.
+Append the fixed `/etc/fstab` entries and install the local AppArmor rule once,
+then run the host installer. The host installer can be rerun after a partial
+failure; do not rerun `append.sh`.
 
 ```bash
-bash ./fstab-append.sh
+bash ./append.sh
 bash ./ubuntu-install.sh
 ```
 
 Both files are linear command lists without loops or conditional branches.
-`fstab-append.sh` only appends the fixed mount configuration.
+`append.sh` appends the fixed mount configuration and permits the rclone FUSE
+mount at `/srv/secure/backups` in the local `fusermount3` AppArmor policy.
 `ubuntu-install.sh` disables swap, creates and mounts the encrypted directories,
 and installs the host services. It uses idempotent systemd mount starts and does
 not overwrite configured rclone or Cloudflare credentials when rerun.

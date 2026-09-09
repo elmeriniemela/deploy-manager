@@ -1,0 +1,2 @@
+mount fstype=fuse.rclone options=(rw,nosuid,nodev) -> /srv/secure/backups/,
+umount /srv/secure/backups/,

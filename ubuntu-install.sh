@@ -4,7 +4,7 @@ set -euxo pipefail
 cd /opt/19
 
 # Ubuntu 26.04 host install. Create and open the LUKS volume, add its UUID to
-# /etc/crypttab, and run fstab-append.sh first by following README.md.
+# /etc/crypttab, and run append.sh first by following README.md.
 systemctl mask swap.target
 systemctl daemon-reload
 
