@@ -100,9 +100,7 @@ flowchart LR
 #### Prerequisite
 
 Use a fresh Ubuntu 26.04 LTS server and a separate empty Hetzner Volume. Attach the
-volume without formatting or automatically mounting it. This is not an in-place
-migration. The commands below format the selected device, so inspect it carefully
-first. See [LUKS.md](LUKS.md)
+volume without formatting or automatically mounting it. See [LUKS.md](LUKS.md)
 for the storage layout and recovery precautions.
 
 Point `19.eniemela.fi` to this server and allow TCP 9019 in the host and
@@ -111,7 +109,7 @@ through nginx basic authentication; its backend is loopback-only on port 8019.
 
 #### Installation
 
-Run the following as root. Identify the volume by matching its `MODEL`, `SERIAL`,
+Identify the volume by matching its `MODEL`, `SERIAL`,
 and `SIZE` with the Hetzner Console. Use its `/dev/sdX` name only for the initial
 format; `/etc/crypttab` stores the stable UUID used after that. `luksFormat` and
 `mkfs.ext4` destroy data on the selected device, so confirm the `lsblk` output before continuing.
@@ -149,45 +147,46 @@ repositories.
 bash ./ubuntu-install.sh
 ```
 
-Finish the configuration and start the application services:
+Finish the configuration by adding secrets:
 
 ```bash
+# Add passwrods
 htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud
 chown root:www-data /etc/nginx/.htpasswd
 chmod 640 /etc/nginx/.htpasswd
-# Add passwrods
 vim /srv/secure/rclone-config/rclone.conf
 vim /srv/secure/secrets/cloudflare.ini
 
+# Add SSL certs
 export TMPDIR=/srv/secure/tmp
 /usr/bin/python3 -m agentd.api ssl_wildcard
 # OR
 rsync -aHAX /etc/letsencrypt/ root@NEW_SERVER:/etc/letsencrypt/
-
-nginx -t
-systemctl start odoo-app.target
 ```
 
 Encrypt `/root/appdata-luks-header-<uuid>.img` before transferring it, then
 remove the plaintext copy. See [LUKS.md](LUKS.md#encrypting-the-header-backup).
 
+```bash
+reboot
+```
+
 After every reboot, Ubuntu and SSH are available but application services stay
 stopped. From a root login shell, unlock, mount, and start them with:
 
 ```bash
+# Mount encrypted partitions
 systemctl start systemd-cryptsetup@appdata.service
+# Start applications
 systemctl start odoo-app.target
 ```
 
 The systemd drop-ins installed by `ubuntu-install.sh` pull in the encrypted bind
 mounts and prevent protected services from starting if a required mount fails.
-Use `findmnt /srv/secure` and `findmnt /var/lib/docker` to inspect mounts, and
-`systemctl status odoo-app.target` to inspect the services.
+Use `systemctl status odoo-app.target` to inspect the services.
 
 The encrypted filesystem also contains nginx request-body temporary files,
-agent temporary files and rotating agent logs. Do not use unencrypted `/tmp` or
-`/var/tmp` for database dumps. Persistent swap is disabled. Confirm that
-`swapon --show` is empty before starting the application services.
+agent temporary files and rotating agent logs.
 
 #### Backup setup (Client-Side Encrypted S3 Backups):
 * All database dumps and Odoo filestores are encrypted client-side via rclone's `crypt` backend before upload to AWS S3.
