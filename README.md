@@ -151,15 +151,15 @@ echo "appdata UUID=$LUKS_UUID none luks,noauto" >> /etc/crypttab
 
 Append the fixed `/etc/fstab` entries once, then run the host installer. The host
 installer can be rerun after a partial failure; do not rerun
-`ubuntu-install-once.sh`.
+`fstab-append.sh`.
 
 ```bash
-bash ./ubuntu-install-once.sh
+bash ./fstab-append.sh
 bash ./ubuntu-install.sh
 ```
 
 Both files are linear command lists without loops or conditional branches.
-`ubuntu-install-once.sh` only appends the fixed mount configuration.
+`fstab-append.sh` only appends the fixed mount configuration.
 `ubuntu-install.sh` disables swap, creates and mounts the encrypted directories,
 and installs the host services. It uses idempotent systemd mount starts and does
 not overwrite configured rclone or Cloudflare credentials when rerun.
@@ -172,8 +172,12 @@ chown root:www-data /etc/nginx/.htpasswd
 chmod 640 /etc/nginx/.htpasswd
 vim /srv/secure/rclone-config/rclone.conf
 vim /srv/secure/secrets/cloudflare.ini
+
 export TMPDIR=/srv/secure/tmp
 /root/agent-venv19/bin/python -m agentd.api ssl_wildcard
+# OR
+sudo rsync -aHAX /etc/letsencrypt/ root@NEW_SERVER:/etc/letsencrypt/
+
 ln -s /etc/nginx/sites-available/00_agent19.conf /etc/nginx/sites-enabled/00_agent19.conf
 ln -s /etc/nginx/sites-available/odoo.conf /etc/nginx/sites-enabled/odoo.conf
 nginx -t
