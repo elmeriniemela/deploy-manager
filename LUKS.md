@@ -3,16 +3,20 @@
 The Ubuntu root filesystem remains unencrypted so the server can boot and
 accept SSH connections. PostgreSQL data, Docker data, Odoo configuration,
 rclone credentials and cache, and application logs live on a manually unlocked
-LUKS2 Hetzner Volume.
+LUKS2 Hetzner Volume. The exact first-install commands are in [README.md](README.md).
 
-The exact first-install commands are in [README.md](README.md). They are kept in
-the documentation because choosing and formatting a block device should be a
-deliberate operator action, not hidden in a Bash script.
+Running a web application on a LUKS-encrypted volume mainly protects the application's data at rest. LUKS encrypts the underlying block device, so the data is unreadable without the decryption key when the volume is locked.
 
-The initial format may use a verified kernel device name such as `/dev/sdb`.
-Identify it by matching the `MODEL`, `SERIAL`, and `SIZE` from `lsblk` with the
-Hetzner Console. Once LUKS exists, `/etc/crypttab` stores its stable UUID; do not
-persist `/dev/sdb`, because kernel device names can change.
+The main benefits are:
+
+- Protection against stolen or removed disks. If someone physically obtains the SSD, HDD, or VM disk image, they cannot simply mount it and read your application files, database files, uploaded content, logs, or configuration.
+- Protection for offline copies and snapshots. If the encrypted block device is copied while locked, the copy remains encrypted. This can matter for VM disks, cloud volumes, decommissioned drives, or accidentally exposed disk images.
+- Safer hardware disposal. Destroying the LUKS key can make recovering data from the disk impractical, even before the physical device is destroyed.
+- Compliance and security controls. Encryption at rest is commonly required or strongly encouraged for systems containing personal data, credentials, financial information, customer uploads, or other sensitive information.
+- Transparent operation. Once the LUKS volume is unlocked and mounted, your web server, database, containers, and application normally use it like any ordinary filesystem. You generally do not have to modify the application itself.
+- Broad coverage. Unlike encrypting selected database columns, LUKS can protect many things automatically, including database files, application files, uploads, logs, search indexes, temporary data stored on the volume, and filesystem metadata.
+
+An important limitation is that LUKS does not protect you from an attacker who compromises the running server while the volume is unlocked. Once mounted, Linux transparently decrypts data for authorized processes, and a root-level attacker can usually read the filesystem just as your application can.
 
 ## Storage layout
 
@@ -44,7 +48,7 @@ Rclone reads its configuration from `/srv/secure/rclone-config/rclone.conf`,
 uses `/srv/secure/rclone-cache`, and mounts the decrypted backup view at
 `/srv/secure/backups`.
 
-Do not store database dumps in `/tmp` or `/var/tmp`. The agent uses
+The agent uses
 `/srv/secure/tmp`, PostgreSQL uses `/srv/secure/tmp/postgresql`, and nginx uses
 its encrypted `/var/lib/nginx` bind mount. Persistent swap is disabled so
 application memory is not written to unencrypted disk.
