@@ -154,13 +154,13 @@ Finish the configuration by adding secrets:
 htpasswd -B -C 12 -c /etc/nginx/.htpasswd cloud
 chown root:www-data /etc/nginx/.htpasswd
 chmod 640 /etc/nginx/.htpasswd
-vim /srv/secure/rclone-config/rclone.conf
-vim /srv/secure/secrets/cloudflare.ini
 
-# Add SSL certs
-python3 -m agentd.api ssl_wildcard
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+rsync -aHAX root@10.0.0.2:/srv/secure/rclone-config/rclone.conf /srv/secure/rclone-config/rclone.conf
+rsync -aHAX root@10.0.0.2:/srv/secure/secrets/cloudflare.ini /srv/secure/secrets/cloudflare.ini
+rsync -aHAX root@10.0.0.2:/etc/letsencrypt/ /etc/letsencrypt/
 # OR
-rsync -aHAX /etc/letsencrypt/ root@NEW_SERVER:/etc/letsencrypt/
+python3 -m agentd.api ssl_wildcard
 ```
 
 Encrypt `/root/appdata-luks-header-<uuid>.img` before transferring it, then
