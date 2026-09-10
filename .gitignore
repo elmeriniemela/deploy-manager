@@ -13,3 +13,7 @@ htmlcov/
 # Local build artifacts
 build/
 scratch/
+
+# Runtime source clones
+/src/*
+!/src/requirements.txt
