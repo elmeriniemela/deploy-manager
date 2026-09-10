@@ -1,10 +1,5 @@
 # LUKS application storage
 
-The Ubuntu root filesystem remains unencrypted so the server can boot and
-accept SSH connections. PostgreSQL data, Docker data, Odoo configuration,
-rclone credentials and cache, and application logs live on a manually unlocked
-LUKS2 Hetzner Volume. The exact first-install commands are in [README.md](README.md).
-
 Running a web application on a LUKS-encrypted volume mainly protects the application's data at rest. LUKS encrypts the underlying block device, so the data is unreadable without the decryption key when the volume is locked.
 
 The main benefits are:
@@ -17,6 +12,11 @@ The main benefits are:
 - Broad coverage. Unlike encrypting selected database columns, LUKS can protect many things automatically, including database files, application files, uploads, logs, search indexes, temporary data stored on the volume, and filesystem metadata.
 
 An important limitation is that LUKS does not protect you from an attacker who compromises the running server while the volume is unlocked. Once mounted, Linux transparently decrypts data for authorized processes, and a root-level attacker can usually read the filesystem just as your application can.
+
+The Ubuntu root filesystem remains unencrypted so the server can boot and
+accept SSH connections. PostgreSQL data, Docker data, Odoo configuration,
+rclone credentials and cache, and application logs live on a manually unlocked
+LUKS2 Hetzner Volume. The exact first-install commands are in [README.md](README.md).
 
 ## Storage layout
 
