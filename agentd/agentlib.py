@@ -105,7 +105,7 @@ def store_nginx_map(fname, match, target, mapping):
             os.fchmod(fp.fileno(), 0o644)
             os.replace(fp.name, path)
         finally:
-            if os.path.exists(fp.name):
+            if os.path.exists(fp.name): # pragma: no cover
                 os.unlink(fp.name)
 
 

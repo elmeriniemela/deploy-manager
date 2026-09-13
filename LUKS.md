@@ -150,12 +150,13 @@ GPG prompts for the password. Encrypt the header before transferring it:
 ```bash
 HEADER_NAME="appdata-luks-header-$LUKS_UUID.img"
 gpg --symmetric "/root/$HEADER_NAME"
+gpg --pinentry-mode loopback --symmetric --cipher-algo AES256 "/root/$HEADER_NAME"
 ```
 
 Decrypt it when needed:
 
 ```bash
-gpg --output "/root/$HEADER_NAME" --decrypt "/offline/path/$HEADER_NAME.gpg"
+gpg -o "/root/$HEADER_NAME" --decrypt --pinentry-mode loopbac "/offline/path/$HEADER_NAME.gpg"
 ```
 
 Transfer only the `.gpg` file and remove the plaintext server copy after the
