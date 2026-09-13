@@ -184,6 +184,12 @@ The systemd drop-ins installed by `ubuntu-install.sh` pull in the encrypted bind
 mounts and prevent protected services from starting if a required mount fails.
 Use `systemctl status odoo-app.target` to inspect the services.
 
+Unattended upgrades continue to download and install updates, but needrestart is
+configured to list services using outdated libraries instead of restarting them.
+Those services keep their old mapped libraries until an operator explicitly
+restarts them or performs the controlled reboot, LUKS unlock, and application
+startup procedure above. Plan that maintenance so security fixes take effect.
+
 The encrypted filesystem also contains nginx request-body temporary files,
 agent temporary files and rotating agent logs.
 

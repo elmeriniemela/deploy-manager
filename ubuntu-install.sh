@@ -50,6 +50,9 @@ install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/rclone-mo
 install -m 0644 systemd/system/appdata-mounts.conf /etc/systemd/system/deploy-manager19.service.d/appdata-mounts.conf
 systemctl daemon-reload
 
+install -d /etc/needrestart/conf.d
+install -m 0644 needrestart/conf.d/deploy-manager.conf /etc/needrestart/conf.d/deploy-manager.conf
+
 apt update
 apt install -y postgresql nginx ca-certificates curl gnupg git patchutils fuse3 cron unattended-upgrades apache2-utils rsync rclone
 apt install -y python3 python3-psycopg2 python3-requests python3-jinja2 certbot python3-certbot-dns-cloudflare
