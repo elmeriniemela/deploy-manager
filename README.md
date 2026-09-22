@@ -226,7 +226,7 @@ Production hosts pull the public image without GitHub credentials. Building and
 publishing require a developer workstation authenticated to GHCR with package
 write permission.
 
-* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 .`
+* `docker build -t ghcr.io/elmeriniemela/odoo-src:19.0 /opt/19`
 * `docker push ghcr.io/elmeriniemela/odoo-src:19.0`
 * https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 
